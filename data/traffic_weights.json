@@ -1,0 +1,23 @@
+{
+    "DEL-BOM": {
+        "route_name": "Delhi → Mumbai",
+        "weight": 0.45,
+        "annual_pax_millions": 9.2,
+        "rank": 1,
+        "source": "DGCA Monthly Statistical Bulletin 2024"
+    },
+    "BOM-BLR": {
+        "route_name": "Mumbai → Bengaluru",
+        "weight": 0.30,
+        "annual_pax_millions": 6.1,
+        "rank": 2,
+        "source": "DGCA Monthly Statistical Bulletin 2024"
+    },
+    "DEL-BLR": {
+        "route_name": "Delhi → Bengaluru",
+        "weight": 0.25,
+        "annual_pax_millions": 5.1,
+        "rank": 3,
+        "source": "DGCA Monthly Statistical Bulletin 2024"
+    }
+}
