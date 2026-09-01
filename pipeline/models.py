@@ -1,5 +1,5 @@
 """
-Pydantic Data Models for the APIx pipeline.
+Pydantic Data Models for the Vayu pipeline.
 Strict validation for raw scraper output and cleaned fare records.
 """
 
@@ -74,10 +74,10 @@ class CleanedFare(BaseModel):
 
 
 class DailyIndexRecord(BaseModel):
-    """A single day's computed APIx value."""
+    """A single day's computed Vayu value."""
 
     date: date
-    apix_value: float = Field(..., gt=0, description="Computed APIx index value")
+    vayu_value: float = Field(..., gt=0, description="Computed Vayu index value")
     daily_change_pct: Optional[float] = Field(None, description="Day-over-day % change")
     num_fares: int = Field(..., ge=0, description="Number of fare quotes used")
     routes_covered: int = Field(..., ge=0, description="Number of routes with data")
@@ -88,6 +88,6 @@ class ValidationDataPoint(BaseModel):
     """A single data point for backtest validation."""
 
     date: date
-    apix_value: float
+    vayu_value: float
     dgca_avg_fare: float
     route: str

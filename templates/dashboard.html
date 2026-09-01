@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <meta name="description" content="APIx — Real-time airfare inflation tracking for MoSPI/DGCA. Chain-based Laspeyres index with DGCA traffic volume weights.">
+    <meta name="description" content="Vayu — Real-time airfare inflation tracking for MoSPI/DGCA. Chain-based Laspeyres index with DGCA traffic volume weights.">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -18,7 +18,7 @@
     <!-- Top Bar -->
     <header class="topbar">
         <div class="topbar-left">
-            <div class="topbar-logo">APIx</div>
+            <div class="topbar-logo">Vayu</div>
             <div>
                 <div class="topbar-title">Airfare Price Index</div>
                 <div class="topbar-subtitle">MoSPI / DGCA · SIH Prototype · Base: 28 Jul 2026 = 100</div>
@@ -38,7 +38,7 @@
     <!-- Index Hero -->
     <section class="index-hero">
         <div class="index-main">
-            <div class="index-label">Current APIx Value</div>
+            <div class="index-label">Current Vayu Value</div>
             <div class="index-value" id="index-value">{{ "%.2f"|format(current_index) }}</div>
             <span class="index-change {% if daily_change > 0 %}up{% elif daily_change < 0 %}down{% else %}flat{% endif %}" id="index-change">
                 {% if daily_change > 0 %}▲{% elif daily_change < 0 %}▼{% else %}—{% endif %}
@@ -86,7 +86,7 @@
     <div class="chart-row">
         <div class="panel">
             <div class="panel-header">
-                <span class="panel-title">30-Day APIx Trend</span>
+                <span class="panel-title">30-Day Vayu Trend</span>
                 <span class="panel-badge info">DAILY</span>
             </div>
             <div class="panel-body">
@@ -95,7 +95,7 @@
         </div>
         <div class="panel">
             <div class="panel-header">
-                <span class="panel-title">Backtest · APIx vs DGCA Monthly Avg</span>
+                <span class="panel-title">Backtest · Vayu vs DGCA Monthly Avg</span>
                 <span class="panel-badge good" id="correlation-badge">R² = —</span>
             </div>
             <div class="panel-body">
@@ -176,11 +176,11 @@
                     Chain-Based Laspeyres Index aligned with MoSPI's 2024 CPI modernization (Base 2024 = 100).
                 </p>
                 <div class="formula-block">
-                    APIx<sub>t</sub> = APIx<sub>t-1</sub> × Σ(w<sub>r</sub> · P<sub>r,t</sub>) / Σ(w<sub>r</sub> · P<sub>r,t-1</sub>)
+                    Vayu<sub>t</sub> = Vayu<sub>t-1</sub> × Σ(w<sub>r</sub> · P<sub>r,t</sub>) / Σ(w<sub>r</sub> · P<sub>r,t-1</sub>)
                 </div>
                 <ul class="method-list">
                     <li>3 DGCA high-traffic routes, weighted by passenger volume</li>
-                    <li>Playwright scraper targeting MakeMyTrip (robots.txt compliant)</li>
+                    <li>Playwright scraper targeting EaseMyTrip, Ixigo, Kayak</li>
                     <li>Pydantic v2 strict validation with IATA code enforcement</li>
                     <li>Base fare / tax separation (GST + UDF + PSF heuristic)</li>
                     <li>IQR outlier removal per route</li>
@@ -200,7 +200,7 @@
             <a href="/api/scrape/log">/api/scrape/log</a>
             <a href="/docs">/docs</a>
         </div>
-        <span>APIx v1.0.0 · SIH Prototype · MoSPI / DGCA</span>
+        <span>Vayu v1.0.0 · SIH Prototype · MoSPI / DGCA</span>
     </footer>
 </div>
 

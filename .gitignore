@@ -28,3 +28,9 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Debug & Scratch artifacts
+*_debug.html
+*_test.html
+card_raw.txt
+kayak_cards.txt

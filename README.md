@@ -1,6 +1,6 @@
-# APIx — Airfare Price Index
+# Vayu — Airfare Price Index
 
-APIx is a real-time airfare inflation tracking prototype built for MoSPI / DGCA. It features a persistent, deterministic data pipeline that pulls fares, validates them via Pydantic, applies IQR outlier removal, and computes a chain-based Laspeyres index weighted by DGCA passenger volumes. The project includes a Bloomberg-style institutional dashboard for monitoring the index and data quality.
+Vayu is a real-time airfare inflation tracking prototype built for MoSPI / DGCA. It features a persistent, deterministic data pipeline that pulls fares, validates them via Pydantic, applies IQR outlier removal, and computes a chain-based Laspeyres index weighted by DGCA passenger volumes. The project includes a Bloomberg-style institutional dashboard for monitoring the index and data quality.
 
 ## How to Run
 

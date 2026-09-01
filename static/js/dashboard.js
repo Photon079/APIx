@@ -1,5 +1,5 @@
 /**
- * APIx Dashboard — Data-focused charts and live pipeline interaction
+ * Vayu Dashboard — Data-focused charts and live pipeline interaction
  */
 
 Chart.defaults.color = '#7a8499';
@@ -35,7 +35,7 @@ async function loadTrendChart() {
 
         const data = json.data;
         const labels = data.map(d => fmtDate(d.date));
-        const values = data.map(d => d.apix_value);
+        const values = data.map(d => d.vayu_value);
 
         const ctx = document.getElementById('trendChart');
         if (!ctx) return;
@@ -47,7 +47,7 @@ async function loadTrendChart() {
             data: {
                 labels,
                 datasets: [{
-                    label: 'APIx',
+                    label: 'Vayu',
                     data: values,
                     borderColor: '#4a9eff',
                     backgroundColor: 'rgba(74, 158, 255, 0.06)',
@@ -76,7 +76,7 @@ async function loadTrendChart() {
                         bodyFont: { family: "'IBM Plex Mono'", size: 13 },
                         displayColors: false,
                         callbacks: {
-                            label: (item) => `APIx: ${item.raw.toFixed(2)}`,
+                            label: (item) => `Vayu: ${item.raw.toFixed(2)}`,
                         },
                     },
                 },
@@ -126,8 +126,8 @@ async function loadValidationChart() {
                 labels,
                 datasets: [
                     {
-                        label: 'APIx (Computed)',
-                        data: series.apix,
+                        label: 'Vayu (Computed)',
+                        data: series.vayu,
                         borderColor: '#4a9eff',
                         backgroundColor: 'transparent',
                         borderWidth: 2,
@@ -165,7 +165,7 @@ async function loadValidationChart() {
                         bodyFont: { family: "'IBM Plex Mono'", size: 12 },
                         callbacks: {
                             label: (item) => item.datasetIndex === 0
-                                ? `APIx: ${item.raw.toFixed(2)}`
+                                ? `Vayu: ${item.raw.toFixed(2)}`
                                 : `DGCA: ₹${item.raw.toLocaleString('en-IN')}`,
                         },
                     },
@@ -177,7 +177,7 @@ async function loadValidationChart() {
                     },
                     y: {
                         position: 'left',
-                        title: { display: true, text: 'APIx', font: { size: 11, weight: '600' }, color: '#4a9eff' },
+                        title: { display: true, text: 'Vayu', font: { size: 11, weight: '600' }, color: '#4a9eff' },
                         grid: { color: '#1e2433' },
                         ticks: { font: { family: "'IBM Plex Mono'", size: 10 }, color: '#4a9eff' },
                     },
@@ -288,7 +288,7 @@ async function triggerScrape() {
     if (!btn || btn.classList.contains('loading')) return;
 
     btn.classList.add('loading');
-    showToast('Scraping MakeMyTrip...', 'info');
+    showToast('Scraping flight sources...', 'info');
 
     try {
         const res = await fetch('/api/scrape');
@@ -298,7 +298,7 @@ async function triggerScrape() {
             showToast(`${json.message} | Mode: ${json.scraper_mode}`, 'success');
 
             if (json.index) {
-                updateHero(json.index.apix_value, json.index.daily_change_pct);
+                updateHero(json.index.vayu_value, json.index.daily_change_pct);
             }
 
             await Promise.all([
@@ -326,7 +326,7 @@ function initWebSocket() {
         ws.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             if (msg.type === 'index_update') {
-                updateHero(msg.data.apix_value, msg.data.daily_change_pct);
+                updateHero(msg.data.vayu_value, msg.data.daily_change_pct);
             }
         };
         ws.onclose = () => setTimeout(initWebSocket, 5000);

@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 import logging
 
-logger = logging.getLogger("apix.robots")
+logger = logging.getLogger("vayu.robots")
 
 
 class RobotsChecker:

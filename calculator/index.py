@@ -16,17 +16,17 @@ import pandas as pd
 from pipeline.models import CleanedFare, DailyIndexRecord
 from config import INDEX_BASE_VALUE, INDEX_BASE_DATE, DATA_DIR, SCRAPED_DIR
 
-logger = logging.getLogger("apix.calculator")
+logger = logging.getLogger("vayu.calculator")
 
 INDEX_CACHE_FILE = DATA_DIR / "index_history.json"
 
 
-class APIxCalculator:
+class VayuCalculator:
     """
-    Computes the Airfare Price Index using a chain-based Laspeyres methodology.
+    Computes the Vayu Airfare Price Index using a chain-based Laspeyres methodology.
 
     Formula:
-        APIx_t = APIx_{t-1} × Σ(w_r × P_r,t) / Σ(w_r × P_r,t-1)
+        Vayu_t = Vayu_{t-1} × Σ(w_r × P_r,t) / Σ(w_r × P_r,t-1)
 
     Where:
         w_r   = DGCA passenger traffic weight for route r
@@ -67,7 +67,7 @@ class APIxCalculator:
                 for record in data.get("index_history", []):
                     self.index_history.append(DailyIndexRecord(
                         date=date.fromisoformat(record["date"]),
-                        apix_value=record["apix_value"],
+                        vayu_value=record["vayu_value"],
                         daily_change_pct=record.get("daily_change_pct", 0),
                         num_fares=record.get("num_fares", 0),
                         routes_covered=record.get("routes_covered", 0),
@@ -89,7 +89,7 @@ class APIxCalculator:
             "index_history": [
                 {
                     "date": record.date.isoformat(),
-                    "apix_value": record.apix_value,
+                    "vayu_value": record.vayu_value,
                     "daily_change_pct": record.daily_change_pct,
                     "num_fares": record.num_fares,
                     "routes_covered": record.routes_covered,
@@ -109,7 +109,7 @@ class APIxCalculator:
         target_date: Optional[date] = None,
     ) -> DailyIndexRecord:
         """
-        Compute the APIx value for a given day from cleaned fare data.
+        Compute the Vayu value for a given day from cleaned fare data.
         """
         if target_date is None:
             target_date = date.today()
@@ -131,7 +131,7 @@ class APIxCalculator:
             if self.index_history:
                 return self.index_history[-1]
             return DailyIndexRecord(
-                date=target_date, apix_value=self._base_value,
+                date=target_date, vayu_value=self._base_value,
                 daily_change_pct=0.0, num_fares=0,
                 routes_covered=0, weighted_avg_fare=0.0,
             )
@@ -140,14 +140,14 @@ class APIxCalculator:
         self.fare_history[date_str] = route_avg_fares
 
         # Compute chain-based index
-        apix_value = self._chain_index(target_date, route_avg_fares)
+        vayu_value = self._chain_index(target_date, route_avg_fares)
 
         # Calculate daily change
         prev_value = self._base_value
         for rec in self.index_history:
             if rec.date < target_date:
-                prev_value = rec.apix_value
-        daily_change = ((apix_value / prev_value) - 1) * 100 if prev_value else 0.0
+                prev_value = rec.vayu_value
+        daily_change = ((vayu_value / prev_value) - 1) * 100 if prev_value else 0.0
 
         # Weighted average fare
         total_weighted = sum(self.weights.get(r, 0) * fare for r, fare in route_avg_fares.items())
@@ -156,8 +156,8 @@ class APIxCalculator:
 
         record = DailyIndexRecord(
             date=target_date,
-            apix_value=round(apix_value, 2),
-            daily_change_pct=round(daily_change, 3),
+            vayu_value=round(vayu_value, 2),
+            daily_change_pct=round(daily_change, 4),
             num_fares=len(fares),
             routes_covered=len(route_avg_fares),
             weighted_avg_fare=round(weighted_avg, 2),
@@ -171,8 +171,8 @@ class APIxCalculator:
         self.save_history()
 
         logger.info(
-            f"APIx[{date_str}] = {record.apix_value} "
-            f"(Δ {record.daily_change_pct:+.3f}%, "
+            f"Vayu[{date_str}] = {record.vayu_value} "
+            f"({record.daily_change_pct:+.3f}%) │ "
             f"{record.num_fares} fares, {record.routes_covered} routes)"
         )
 
@@ -206,7 +206,8 @@ class APIxCalculator:
                 # Find the most recent record before target_date
                 prev_records = [r for r in self.index_history if r.date < target_date]
                 if prev_records:
-                    return prev_records[-1].apix_value
+                    if prev_records[-1].date == prev_date:
+                        return prev_records[-1].vayu_value
             return self._base_value
 
         numerator = 0.0
@@ -227,7 +228,7 @@ class APIxCalculator:
             return self._base_value
 
         prev_records = [r for r in self.index_history if r.date < target_date]
-        prev_index = prev_records[-1].apix_value if prev_records else self._base_value
+        prev_index = prev_records[-1].vayu_value if prev_records else self._base_value
         price_ratio = numerator / denominator
         return prev_index * price_ratio
 
@@ -241,11 +242,11 @@ class APIxCalculator:
             logger.info(f"Using cached backtest history ({len(self.index_history)} records)")
             return self.index_history
 
-        from scraper.engine import MakeMyTripScraper
+        from scraper.engine import VayuScraper
         from pipeline.cleaner import FareCleaner
         from pipeline.validator import FareValidator
 
-        scraper = MakeMyTripScraper()
+        scraper = VayuScraper()
         cleaner = FareCleaner()
         validator = FareValidator()
 
@@ -282,31 +283,31 @@ class APIxCalculator:
         return self.index_history
 
     def get_correlation_data(self) -> dict:
-        """Load historical DGCA data and compute correlation with APIx."""
+        """Load historical DGCA data and compute correlation with Vayu."""
         dgca_path = DATA_DIR / "historical_dgca.csv"
         try:
             dgca_df = pd.read_csv(dgca_path, parse_dates=["date"])
         except FileNotFoundError:
-            return {"correlation_r": 0, "r_squared": 0, "data_points": 0, "series": {"dates": [], "apix": [], "dgca_fare": [], "dgca_normalized": []}}
+            return {"correlation_r": 0, "r_squared": 0, "data_points": 0, "series": {"dates": [], "vayu": [], "dgca_fare": [], "dgca_normalized": []}}
 
-        # Build APIx series
-        apix_series = {record.date.isoformat(): record.apix_value for record in self.index_history}
+        # Build Vayu series
+        vayu_series = {record.date.isoformat(): record.vayu_value for record in self.index_history}
 
-        matched_dates, apix_values, dgca_values = [], [], []
+        matched_dates, vayu_values, dgca_values = [], [], []
 
         for _, row in dgca_df.iterrows():
             date_str = row["date"].strftime("%Y-%m-%d")
-            if date_str in apix_series:
+            if date_str in vayu_series:
                 matched_dates.append(date_str)
-                apix_values.append(apix_series[date_str])
+                vayu_values.append(vayu_series[date_str])
                 dgca_values.append(row["dgca_avg_fare"])
 
         correlation = 0.0
-        if len(apix_values) >= 3:
-            apix_arr = np.array(apix_values)
+        if len(vayu_values) >= 3:
+            vayu_arr = np.array(vayu_values)
             dgca_arr = np.array(dgca_values)
             dgca_normalized = (dgca_arr / dgca_arr[0]) * 100
-            correlation = float(np.corrcoef(apix_arr, dgca_normalized)[0, 1])
+            correlation = float(np.corrcoef(vayu_arr, dgca_normalized)[0, 1])
 
         return {
             "correlation_r": round(correlation, 4),
@@ -314,7 +315,7 @@ class APIxCalculator:
             "data_points": len(matched_dates),
             "series": {
                 "dates": matched_dates,
-                "apix": apix_values,
+                "vayu": vayu_values,
                 "dgca_fare": dgca_values,
                 "dgca_normalized": (np.array(dgca_values) / dgca_values[0] * 100).tolist() if dgca_values else [],
             },
@@ -327,7 +328,7 @@ class APIxCalculator:
         return [
             {
                 "date": r.date.isoformat(),
-                "apix_value": r.apix_value,
+                "vayu_value": r.vayu_value,
                 "daily_change_pct": r.daily_change_pct,
                 "num_fares": r.num_fares,
                 "routes_covered": r.routes_covered,

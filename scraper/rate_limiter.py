@@ -8,7 +8,7 @@ import random
 import time
 import logging
 
-logger = logging.getLogger("apix.rate_limiter")
+logger = logging.getLogger("vayu.rate_limiter")
 
 
 class AsyncRateLimiter:

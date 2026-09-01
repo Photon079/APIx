@@ -12,7 +12,7 @@ import pandas as pd
 from pipeline.models import RawFareQuote, CleanedFare
 from config import TAX_RATIO_ESTIMATE, MIN_FARE_INR, MAX_FARE_INR
 
-logger = logging.getLogger("apix.cleaner")
+logger = logging.getLogger("vayu.cleaner")
 
 
 class FareCleaner:

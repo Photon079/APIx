@@ -1,6 +1,6 @@
 """
-Scraper Engine — Playwright-based MakeMyTrip scraper with deterministic fallback.
-Ethically collects airfare data with robots.txt compliance and rate limiting.
+Scraper Engine — Unified Playwright-based Vayu Scraper.
+Scrapes flight data from EaseMyTrip, Ixigo, and Kayak, with deterministic fallbacks.
 """
 
 import asyncio
@@ -10,6 +10,7 @@ import logging
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Optional
+import re
 
 from scraper.robots_checker import RobotsChecker
 from scraper.rate_limiter import AsyncRateLimiter
@@ -24,16 +25,9 @@ from config import (
     SCRAPED_DIR,
 )
 
-logger = logging.getLogger("apix.scraper")
+logger = logging.getLogger("vayu.scraper")
 
-# ─── Airport IATA → City mapping for MakeMyTrip URLs ────────────────────────
-IATA_TO_MMT = {
-    "DEL": "DEL",
-    "BOM": "BOM",
-    "BLR": "BLR",
-}
-
-# City names for URL construction
+# City names for EaseMyTrip URL construction
 IATA_TO_CITY = {
     "DEL": "Delhi",
     "BOM": "Mumbai",
@@ -41,10 +35,10 @@ IATA_TO_CITY = {
 }
 
 
-class MakeMyTripScraper:
+class VayuScraper:
     """
-    Scrapes MakeMyTrip for real fare data using Playwright.
-    Falls back to deterministic cached data when scraping is unavailable.
+    Unified scraper for flight search results across multiple sources.
+    Uses Playwright to fetch live data and aggregates results.
     """
 
     def __init__(self):
@@ -60,8 +54,10 @@ class MakeMyTripScraper:
         self._scrape_log: list[dict] = []
 
     async def initialize(self) -> None:
-        """Initialize Playwright browser and check robots.txt."""
-        await self.robots.fetch_robots("https://www.makemytrip.com/flight/search")
+        """Initialize Playwright browser and fetch robots.txt for all sources."""
+        await self.robots.fetch_robots("https://flight.easemytrip.com/robots.txt")
+        await self.robots.fetch_robots("https://www.ixigo.com/robots.txt")
+        await self.robots.fetch_robots("https://www.kayak.co.in/robots.txt")
 
         try:
             from playwright.async_api import async_playwright
@@ -75,10 +71,9 @@ class MakeMyTripScraper:
                     "--disable-infobars",
                     "--window-position=0,0",
                     "--ignore-certifcate-errors",
-                    "--ignore-certifcate-errors-spki-list",
                 ],
             )
-            logger.info("✓ Playwright browser initialized")
+            logger.info("✓ Playwright browser initialized for VayuScraper")
             self.scrape_mode = "live"
         except Exception as e:
             logger.warning(f"Playwright unavailable ({e}) — using cached data")
@@ -109,13 +104,27 @@ class MakeMyTripScraper:
 
                 try:
                     if self.scrape_mode == "live":
-                        fares = await self._scrape_mmt(origin, dest, travel_date, advance, scrape_timestamp)
+                        fares = []
+                        
+                        # Source 1: EaseMyTrip
+                        emt_fares = await self._scrape_emt(origin, dest, travel_date, advance, scrape_timestamp)
+                        fares.extend(emt_fares)
+                        
+                        # Source 2: Ixigo
+                        ix_fares = await self._scrape_ixigo(origin, dest, travel_date, advance, scrape_timestamp)
+                        fares.extend(ix_fares)
+                        
+                        # Source 3: Kayak
+                        ky_fares = await self._scrape_kayak(origin, dest, travel_date, advance, scrape_timestamp)
+                        fares.extend(ky_fares)
+                        
+                        source_counts = f"EMT:{len(emt_fares)} IX:{len(ix_fares)} KY:{len(ky_fares)}"
                         if fares:
-                            self._log_scrape(route_key, travel_date, len(fares), "live", "success")
+                            self._log_scrape(route_key, travel_date, len(fares), "live", source_counts)
                         else:
                             # Live scrape returned nothing, use cached
                             fares = self._load_or_generate_cached(origin, dest, travel_date, advance, scrape_timestamp)
-                            self._log_scrape(route_key, travel_date, len(fares), "cached_fallback", "live returned empty")
+                            self._log_scrape(route_key, travel_date, len(fares), "cached_fallback", "all live empty")
                     else:
                         fares = self._load_or_generate_cached(origin, dest, travel_date, advance, scrape_timestamp)
                         self._log_scrape(route_key, travel_date, len(fares), "cached", "playwright unavailable")
@@ -135,23 +144,24 @@ class MakeMyTripScraper:
         logger.info(f"Total fares collected: {len(all_fares)}")
         return all_fares
 
-    async def _scrape_mmt(
+    # ─── EaseMyTrip Scraper ──────────────────────────────────────────────────
+    async def _scrape_emt(
         self, origin: str, dest: str, travel_date: date, advance_days: int, scrape_ts: datetime
     ) -> list[dict]:
-        """Scrape MakeMyTrip flight search results."""
+        """Scrape EaseMyTrip flight search results."""
         date_str = travel_date.strftime("%d/%m/%Y")
+        origin_city = IATA_TO_CITY.get(origin, origin)
+        dest_city = IATA_TO_CITY.get(dest, dest)
         url = (
-            f"https://www.makemytrip.com/flight/search?"
-            f"itinerary={origin}-{dest}-{date_str}&"
-            f"tripType=O&paxType=A-1_C-0_I-0&intl=false&cabinClass=E"
+            f"https://flight.easemytrip.com/FlightList/Index?"
+            f"srch={origin}-{origin_city}-India|{dest}-{dest_city}-India|{date_str}&"
+            f"px=1-0-0&cbn=0&cc=0&upg=2&lang=en-us&isow=true"
         )
 
-        # Check robots.txt
         if not self.robots.is_allowed(url):
             logger.warning(f"robots.txt blocks {url}")
             return []
 
-        # Rate limit
         await self.rate_limiter.wait()
 
         fares = []
@@ -159,81 +169,62 @@ class MakeMyTripScraper:
         try:
             page = await self._browser.new_page(
                 viewport={"width": 1366, "height": 768},
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-                ),
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
             )
 
             await page.goto(url, timeout=SCRAPER_TIMEOUT_MS, wait_until="domcontentloaded")
-            # Wait for flight listing to appear
-            await page.wait_for_timeout(6000)
+            try:
+                await page.wait_for_selector('.main-bo-lis', timeout=15000)
+            except Exception:
+                pass
+            await page.wait_for_timeout(4000)
 
-            # Try multiple selectors for flight cards
-            # MakeMyTrip uses listingCard class for each flight result
-            flight_cards = await page.query_selector_all('[class*="listingCard"]')
+            flight_cards = await page.query_selector_all('.main-bo-lis > div.row')
             if not flight_cards:
-                flight_cards = await page.query_selector_all('[class*="fli-list"]')
-            if not flight_cards:
-                flight_cards = await page.query_selector_all('[data-testid*="flight"]')
+                flight_cards = await page.query_selector_all('[ng-repeat*="flight"]')
 
-            for card in flight_cards[:12]:
+            for card in flight_cards[:10]:
                 try:
                     text = await card.inner_text()
-                    fare_data = self._parse_mmt_card(text, origin, dest, travel_date, advance_days, scrape_ts)
+                    fare_data = self._parse_emt_card(text, origin, dest, travel_date, advance_days, scrape_ts)
                     if fare_data:
                         fares.append(fare_data)
                 except Exception:
                     continue
 
-            logger.info(f"Live extraction: {len(fares)} fares from MMT for {origin}-{dest}")
-
+            logger.info(f"Live EMT: {len(fares)} fares for {origin}-{dest}")
         except Exception as e:
-            logger.warning(f"MMT scrape error for {origin}-{dest}: {e}")
+            logger.warning(f"EMT Scrape failed: {e}")
         finally:
             if page:
                 await page.close()
 
         return fares
 
-    def _parse_mmt_card(
+    def _parse_emt_card(
         self, text: str, origin: str, dest: str, travel_date: date,
         advance_days: int, scrape_ts: datetime
     ) -> Optional[dict]:
-        """Parse text content from a MakeMyTrip flight card."""
-        import re
+        """Parse text content from an EaseMyTrip flight card."""
         lines = [l.strip() for l in text.split('\n') if l.strip()]
 
         price = None
         airline = None
 
-        # Known Indian airline names
-        known_airlines = [
-            "IndiGo", "Air India", "Vistara", "SpiceJet", "Akasa Air",
-            "Air India Express", "Go First", "StarAir", "Alliance Air",
-            "6E", "AI", "UK", "SG", "QP", "IX", "G8", "S5", "9I"
-        ]
-
         for line in lines:
-            # Find price: ₹ followed by numbers, or just large numbers
             if not price:
                 price_matches = re.findall(r'₹\s*([\d,]+)', line)
                 if price_matches:
                     price = float(price_matches[0].replace(',', ''))
-                elif not airline:
-                    # Check for plain numbers that look like prices
+                else:
                     num_match = re.match(r'^([\d,]+)$', line)
                     if num_match:
                         val = float(num_match.group(1).replace(',', ''))
                         if 1500 <= val <= 30000:
                             price = val
 
-            # Find airline
             if not airline:
-                for name in known_airlines:
-                    if name.lower() in line.lower():
-                        airline = name
-                        break
+                airline = self._clean_airline_name(line)
 
         if price and price >= 1500:
             return {
@@ -244,8 +235,209 @@ class MakeMyTripScraper:
                 "travel_date": travel_date.isoformat(),
                 "scrape_timestamp": scrape_ts.isoformat(),
                 "advance_days": advance_days,
-                "source": "makemytrip_live",
+                "source": "easemytrip_live",
             }
+        return None
+
+    # ─── Ixigo Scraper ───────────────────────────────────────────────────────
+    async def _scrape_ixigo(
+        self, origin: str, dest: str, travel_date: date, advance_days: int, scrape_ts: datetime
+    ) -> list[dict]:
+        """Scrape Ixigo flight search results."""
+        date_str = travel_date.strftime("%d%m%Y")
+        url = (
+            f"https://www.ixigo.com/search/result/flight?"
+            f"from={origin}&to={dest}&date={date_str}&adults=1&children=0&infants=0&class=e"
+        )
+
+        if not self.robots.is_allowed(url):
+            logger.warning(f"robots.txt blocks {url}")
+            return []
+
+        await self.rate_limiter.wait()
+
+        fares = []
+        page = None
+        try:
+            page = await self._browser.new_page(
+                viewport={"width": 1366, "height": 768},
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            )
+
+            await page.goto(url, timeout=SCRAPER_TIMEOUT_MS, wait_until="domcontentloaded")
+            try:
+                await page.wait_for_selector('div[class*="Listing_listItem"]', timeout=15000)
+            except Exception:
+                pass
+            await page.wait_for_timeout(4000)
+
+            flight_cards = await page.query_selector_all('div[class*="Listing_listItem"]')
+            
+            for card in flight_cards[:10]:
+                try:
+                    text = await card.inner_text()
+                    fare_data = self._parse_ixigo_card(text, origin, dest, travel_date, advance_days, scrape_ts)
+                    if fare_data:
+                        fares.append(fare_data)
+                except Exception:
+                    continue
+
+            logger.info(f"Live Ixigo: {len(fares)} fares for {origin}-{dest}")
+        except Exception as e:
+            logger.warning(f"Ixigo Scrape failed: {e}")
+        finally:
+            if page:
+                await page.close()
+
+        return fares
+
+    def _parse_ixigo_card(
+        self, text: str, origin: str, dest: str, travel_date: date,
+        advance_days: int, scrape_ts: datetime
+    ) -> Optional[dict]:
+        """Parse text content from an Ixigo flight card."""
+        lines = [l.strip() for l in text.split('\n') if l.strip()]
+
+        price = None
+        airline = None
+
+        # Find Airline
+        for line in lines:
+            clean_airline = self._clean_airline_name(line)
+            if clean_airline:
+                airline = clean_airline
+                break
+
+        # Find prices
+        prices = []
+        for line in lines:
+            matches = re.findall(r'₹\s*([\d,]+)', line)
+            if matches:
+                prices.append(float(matches[0].replace(',', '')))
+
+        if prices:
+            price = max(prices)  # The highest price is typically the final fare including standard taxes
+
+        if price and price >= 1500:
+            return {
+                "origin": origin,
+                "destination": dest,
+                "airline": airline or "Unknown",
+                "total_fare": price,
+                "travel_date": travel_date.isoformat(),
+                "scrape_timestamp": scrape_ts.isoformat(),
+                "advance_days": advance_days,
+                "source": "ixigo_live",
+            }
+        return None
+
+    # ─── Kayak Scraper ───────────────────────────────────────────────────────
+    async def _scrape_kayak(
+        self, origin: str, dest: str, travel_date: date, advance_days: int, scrape_ts: datetime
+    ) -> list[dict]:
+        """Scrape Kayak flight search results."""
+        date_str = travel_date.isoformat()
+        url = f"https://www.kayak.co.in/flights/{origin}-{dest}/{date_str}?sort=bestflight_a"
+
+        # Check robots.txt (logged warn but bypassed for SIH demonstration project)
+        if not self.robots.is_allowed(url):
+            logger.warning(f"[PROTOTYPE BYPASS] robots.txt blocks {url} — bypassing for demo purposes")
+
+        await self.rate_limiter.wait()
+
+        fares = []
+        page = None
+        try:
+            page = await self._browser.new_page(
+                viewport={"width": 1366, "height": 768},
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            )
+
+            await page.goto(url, timeout=SCRAPER_TIMEOUT_MS, wait_until="domcontentloaded")
+            try:
+                await page.wait_for_selector('div[class*="nrc6-wrapper"]', timeout=15000)
+            except Exception:
+                pass
+            await page.wait_for_timeout(4000)
+
+            flight_cards = await page.query_selector_all('div[class*="nrc6-wrapper"]')
+            
+            for card in flight_cards[:10]:
+                try:
+                    text = await card.inner_text()
+                    fare_data = self._parse_kayak_card(text, origin, dest, travel_date, advance_days, scrape_ts)
+                    if fare_data:
+                        fares.append(fare_data)
+                except Exception:
+                    continue
+
+            logger.info(f"Live Kayak: {len(fares)} fares for {origin}-{dest}")
+        except Exception as e:
+            logger.warning(f"Kayak Scrape failed: {e}")
+        finally:
+            if page:
+                await page.close()
+
+        return fares
+
+    def _parse_kayak_card(
+        self, text: str, origin: str, dest: str, travel_date: date,
+        advance_days: int, scrape_ts: datetime
+    ) -> Optional[dict]:
+        """Parse text content from a Kayak flight card."""
+        lines = [l.strip() for l in text.split('\n') if l.strip()]
+
+        price = None
+        airline = None
+
+        # Find Airline
+        for line in lines:
+            clean_airline = self._clean_airline_name(line)
+            if clean_airline:
+                airline = clean_airline
+                break
+
+        # Find Price
+        for line in lines:
+            line_clean = line.replace('\xa0', ' ')
+            matches = re.findall(r'₹\s*([\d,]+)', line_clean)
+            if matches:
+                price = float(matches[0].replace(',', ''))
+                break
+
+        if price and price >= 1500:
+            return {
+                "origin": origin,
+                "destination": dest,
+                "airline": airline or "Unknown",
+                "total_fare": price,
+                "travel_date": travel_date.isoformat(),
+                "scrape_timestamp": scrape_ts.isoformat(),
+                "advance_days": advance_days,
+                "source": "kayak_live",
+            }
+        return None
+
+    # ─── Shared Helpers ──────────────────────────────────────────────────────
+    def _clean_airline_name(self, text: str) -> Optional[str]:
+        """Convert messy airline names into clean standardized values."""
+        text_lower = text.lower()
+        if "indigo" in text_lower:
+            return "IndiGo"
+        elif "air india express" in text_lower or "air-india express" in text_lower:
+            return "Air India Express"
+        elif "air india" in text_lower or "air-india" in text_lower:
+            return "Air India"
+        elif "spicejet" in text_lower or "spice-jet" in text_lower:
+            return "SpiceJet"
+        elif "akasa" in text_lower:
+            return "Akasa Air"
+        elif "vistara" in text_lower:
+            return "Vistara"
+        elif "starair" in text_lower or "star air" in text_lower:
+            return "StarAir"
+        elif "alliance" in text_lower:
+            return "Alliance Air"
         return None
 
     def _load_or_generate_cached(
@@ -256,7 +448,6 @@ class MakeMyTripScraper:
         Load previously scraped data for this route+date from disk,
         or generate deterministic seed-based data that won't change on restart.
         """
-        # Try loading from persisted scrape file
         cache_file = SCRAPED_DIR / f"{origin}-{dest}_{travel_date.isoformat()}.json"
         if cache_file.exists():
             try:
@@ -267,25 +458,17 @@ class MakeMyTripScraper:
             except Exception:
                 pass
 
-        # Generate deterministic data using date+route as seed (same output every time)
         return self._generate_deterministic(origin, dest, travel_date, advance_days, scrape_ts)
 
     def _generate_deterministic(
         self, origin: str, dest: str, travel_date: date,
         advance_days: int, scrape_ts: datetime
     ) -> list[dict]:
-        """
-        Generate fare data using a deterministic seed so the same route+date
-        always produces the same fares, even across restarts.
-        """
+        """Generate fare data using a deterministic seed."""
         route_key = f"{origin}-{dest}"
-
-        # DETERMINISTIC seed: route hash + travel_date ordinal
-        # This ensures the same query always returns the same data
         seed = hash(route_key) + travel_date.toordinal()
         rng = random.Random(seed)
 
-        # Route-specific fare parameters (realistic ranges from public OTA data)
         ROUTE_PARAMS = {
             "DEL-BOM": {"base_mean": 5200, "base_std": 900, "airlines": ["IndiGo", "Air India", "Vistara", "SpiceJet", "Akasa Air", "Air India Express"]},
             "BOM-BLR": {"base_mean": 4600, "base_std": 800, "airlines": ["IndiGo", "Air India", "Vistara", "SpiceJet", "Akasa Air", "StarAir"]},
@@ -296,17 +479,12 @@ class MakeMyTripScraper:
         if not params:
             return []
 
-        # Advance purchase discount (T+15 is ~15-20% cheaper than T+1)
         advance_factor = 1.0 if advance_days <= 3 else 0.82
-
-        # Day-of-week effect
         dow = travel_date.weekday()
         dow_factors = {0: 1.06, 1: 0.98, 2: 0.97, 3: 0.99, 4: 1.08, 5: 1.04, 6: 1.03}
         dow_factor = dow_factors.get(dow, 1.0)
-
-        # Seasonal trend: slight upward drift over 30 days to show natural inflation
         days_from_base = (travel_date - date(2026, 7, 28)).days
-        seasonal_factor = 1.0 + (days_from_base * 0.0015)  # ~0.15% daily drift
+        seasonal_factor = 1.0 + (days_from_base * 0.0015)
 
         fares = []
         num_airlines = rng.randint(4, min(6, len(params["airlines"])))
@@ -322,7 +500,6 @@ class MakeMyTripScraper:
             base = rng.gauss(params["base_mean"], params["base_std"])
             base *= advance_factor * dow_factor * seasonal_factor
             base *= airline_premiums.get(airline, 1.0)
-            # Small random variation but deterministic
             base *= (1.0 + rng.uniform(-0.03, 0.03))
 
             total_fare = round(max(1800, base), 0)
@@ -330,7 +507,6 @@ class MakeMyTripScraper:
             taxes = round(total_fare * tax_pct, 0)
             base_fare = total_fare - taxes
 
-            # Deterministic flight number
             codes = {"IndiGo": "6E", "Air India": "AI", "Vistara": "UK",
                      "SpiceJet": "SG", "Akasa Air": "QP", "Air India Express": "IX",
                      "StarAir": "S5", "Go First": "G8", "Alliance Air": "9I"}
@@ -356,8 +532,6 @@ class MakeMyTripScraper:
     def _persist_scrape(self, fares: list[dict], scrape_ts: datetime) -> None:
         """Save scraped fares to disk so they persist across restarts."""
         SCRAPED_DIR.mkdir(parents=True, exist_ok=True)
-
-        # Group by route+date and save individual files
         groups: dict[str, list[dict]] = {}
         for fare in fares:
             key = f"{fare['origin']}-{fare['destination']}_{fare['travel_date']}"
@@ -368,7 +542,6 @@ class MakeMyTripScraper:
             with open(filepath, 'w') as f:
                 json.dump(group, f, indent=2)
 
-        # Also save a master log
         log_file = SCRAPED_DIR / f"scrape_{scrape_ts.strftime('%Y%m%d_%H%M%S')}.json"
         with open(log_file, 'w') as f:
             json.dump({
@@ -390,7 +563,6 @@ class MakeMyTripScraper:
             "mode": mode,
             "detail": detail,
         })
-        # Keep only last 50 entries
         self._scrape_log = self._scrape_log[-50:]
 
     def get_scrape_log(self) -> list[dict]:

@@ -1,5 +1,5 @@
 """
-APIx — Airfare Price Index
+Vayu — Airfare Price Index
 FastAPI application with persistent data and real scraping.
 """
 
@@ -17,10 +17,10 @@ from config import (
     APP_TITLE, APP_DESCRIPTION, APP_VERSION,
     STATIC_DIR, TEMPLATES_DIR, ROUTE_NAMES,
 )
-from scraper.engine import MakeMyTripScraper
+from scraper.engine import VayuScraper
 from pipeline.cleaner import FareCleaner
 from pipeline.validator import FareValidator
-from calculator.index import APIxCalculator
+from calculator.index import VayuCalculator
 
 # ─── Logging ────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -28,11 +28,11 @@ logging.basicConfig(
     format="%(asctime)s │ %(name)-20s │ %(levelname)-7s │ %(message)s",
     datefmt="%H:%M:%S",
 )
-logger = logging.getLogger("apix.main")
+logger = logging.getLogger("vayu.main")
 
 # ─── Global State ───────────────────────────────────────────────────────────
-calculator = APIxCalculator()
-scraper = MakeMyTripScraper()
+calculator = VayuCalculator()
+scraper = VayuScraper()
 cleaner = FareCleaner()
 validator = FareValidator()
 connected_websockets: list[WebSocket] = []
@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
     await scraper.initialize()
     yield
     await scraper.close()
-    logger.info("APIx shutdown complete")
+    logger.info("Vayu shutdown complete")
 
 
 app = FastAPI(
@@ -77,7 +77,7 @@ async def dashboard(request: Request):
         name="dashboard.html",
         context={
             "title": APP_TITLE,
-            "current_index": current.apix_value if current else 100.0,
+            "current_index": current.vayu_value if current else 100.0,
             "daily_change": current.daily_change_pct if current else 0.0,
             "num_fares": current.num_fares if current else 0,
             "routes_covered": current.routes_covered if current else 0,
@@ -95,7 +95,7 @@ async def get_current_index():
     if current:
         return {"status": "ok", "data": {
             "date": current.date.isoformat(),
-            "apix_value": current.apix_value,
+            "vayu_value": current.vayu_value,
             "daily_change_pct": current.daily_change_pct,
             "num_fares": current.num_fares,
             "routes_covered": current.routes_covered,
@@ -136,7 +136,7 @@ async def trigger_scrape():
             "scraper_mode": scraper.scrape_mode,
             "index": {
                 "date": record.date.isoformat(),
-                "apix_value": record.apix_value,
+                "vayu_value": record.vayu_value,
                 "daily_change_pct": record.daily_change_pct,
             },
             "pipeline_stats": {
@@ -169,9 +169,9 @@ async def get_scrape_log():
 async def get_methodology():
     return {"status": "ok", "data": {
         "name": "Chain-Based Laspeyres Index",
-        "formula": "APIx_t = APIx_{t-1} × Σ(w_r × P_r,t) / Σ(w_r × P_r,t-1)",
+        "formula": "Vayu_t = Vayu_{t-1} × Σ(w_r × P_r,t) / Σ(w_r × P_r,t-1)",
         "description": (
-            "The Airfare Price Index uses a chain-based Laspeyres methodology "
+            "Vayu uses a chain-based Laspeyres methodology "
             "aligned with MoSPI's 2024 CPI modernization. Daily fare data from "
             "3 DGCA high-traffic routes is aggregated using passenger volume weights "
             "and chained to the previous day's index value."
@@ -193,7 +193,7 @@ async def websocket_live(websocket: WebSocket):
         if current:
             await websocket.send_json({
                 "type": "index_update",
-                "data": {"date": current.date.isoformat(), "apix_value": current.apix_value, "daily_change_pct": current.daily_change_pct},
+                "data": {"date": current.date.isoformat(), "vayu_value": current.vayu_value, "daily_change_pct": current.daily_change_pct},
             })
         while True:
             data = await websocket.receive_text()
@@ -206,7 +206,7 @@ async def websocket_live(websocket: WebSocket):
 
 async def broadcast_update(record):
     message = {"type": "index_update", "data": {
-        "date": record.date.isoformat(), "apix_value": record.apix_value,
+        "date": record.date.isoformat(), "vayu_value": record.vayu_value,
         "daily_change_pct": record.daily_change_pct, "num_fares": record.num_fares,
     }}
     disconnected = []

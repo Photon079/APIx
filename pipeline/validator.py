@@ -7,7 +7,7 @@ import logging
 from pipeline.models import CleanedFare
 from config import VALID_IATA_CODES, MIN_FARE_INR, MAX_FARE_INR
 
-logger = logging.getLogger("apix.validator")
+logger = logging.getLogger("vayu.validator")
 
 
 class FareValidator:

@@ -42,7 +42,7 @@ SCRAPER_MIN_DELAY = 3.0   # Minimum seconds between requests
 SCRAPER_MAX_DELAY = 7.0   # Maximum seconds between requests
 SCRAPER_MAX_REQUESTS_PER_SESSION = 20
 SCRAPER_TIMEOUT_MS = 30000  # 30 second page load timeout
-SCRAPER_HEADLESS = True
+SCRAPER_HEADLESS = False
 
 # ─── Data Validation ────────────────────────────────────────────────────────
 MIN_FARE_INR = 1500    # Minimum plausible domestic economy fare
@@ -61,7 +61,7 @@ INDEX_BASE_VALUE = 100.0
 INDEX_BASE_DATE = date(2026, 7, 28)  # 30 days before current prototype date
 
 # ─── Server Settings ────────────────────────────────────────────────────────
-APP_TITLE = "APIx — Airfare Price Index"
+APP_TITLE = "Vayu — Airfare Price Index"
 APP_DESCRIPTION = "Real-time airfare inflation tracking for MoSPI/DGCA"
 APP_VERSION = "1.0.0-prototype"
 HOST = "0.0.0.0"
