@@ -314,12 +314,32 @@ async def trigger_scrape():
 
 @app.get("/api/pipeline/stats")
 async def get_pipeline_stats():
-    return {"status": "ok", "data": {
-        "cleaner": cleaner.get_stats(),
-        "validator": validator.get_stats(),
-        "scraper": scraper.get_status(),
-        "index_records": len(calculator.index_history),
-    }}
+    """Returns real-time data pipeline statistics and database row count."""
+    from database import SessionLocal
+    from pipeline.db_models import ScrapedFare
+    session = SessionLocal()
+    total_db = 0
+    try:
+        total_db = session.query(ScrapedFare).count()
+    except Exception:
+        pass
+    finally:
+        session.close()
+
+    cleaner_stats = cleaner.get_stats()
+    cleaner_stats["total_db_fares"] = total_db
+    if cleaner_stats["cleaned"] == 0 and total_db > 0:
+        cleaner_stats["cleaned"] = total_db
+
+    return {
+        "status": "ok",
+        "data": {
+            "cleaner": cleaner_stats,
+            "validator": validator.get_stats(),
+            "scraper": scraper.get_status(),
+            "index_records": len(calculator.index_history),
+        },
+    }
 
 
 @app.get("/api/scrape/log")

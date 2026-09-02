@@ -318,9 +318,15 @@ async function loadPipelineStats() {
         if (json.status !== 'ok') return;
         const d = json.data;
         setText('stat-records', d.index_records || 0);
-        setText('stat-cleaned', d.cleaner?.cleaned || 0);
+        setText('stat-cleaned', d.cleaner?.cleaned || d.cleaner?.total_db_fares || 0);
         setText('stat-outliers', d.cleaner?.dropped_outlier || 0);
         setText('stat-persisted', d.scraper?.persisted_files || 0);
+
+        // Update Telemetry Page Pipeline Cards
+        setText('telemetry-cleaned', d.cleaner?.cleaned || d.cleaner?.total_db_fares || 0);
+        setText('telemetry-dupes', d.cleaner?.dropped_duplicate || 0);
+        setText('telemetry-outliers', d.cleaner?.dropped_outlier || 0);
+        setText('telemetry-invalid', d.cleaner?.dropped_invalid || 0);
     } catch (err) {}
 }
 
