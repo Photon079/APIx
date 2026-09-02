@@ -37,6 +37,27 @@ async function loadTrendChart() {
         const labels = data.map(d => fmtDate(d.date));
         const values = data.map(d => d.vayu_value);
 
+        // Fetch 3-Day ML Projections
+        let projectionData = [];
+        try {
+            const projRes = await fetch('/api/index/projection');
+            const projJson = await projRes.json();
+            if (projJson.status === 'ok') {
+                projectionData = projJson.projections;
+            }
+        } catch (e) {}
+
+        const fullLabels = [...labels];
+        const historicalValues = [...values];
+        const projectedValues = new Array(values.length - 1).fill(null);
+        projectedValues.push(values[values.length - 1]); // Connect last historical point
+
+        projectionData.forEach(p => {
+            fullLabels.push(fmtDate(p.date) + ' (Proj)');
+            historicalValues.push(null);
+            projectedValues.push(p.projected_vayu);
+        });
+
         const ctx = document.getElementById('trendChart');
         if (!ctx) return;
 
@@ -45,27 +66,38 @@ async function loadTrendChart() {
         trendChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels,
-                datasets: [{
-                    label: 'Vayu',
-                    data: values,
-                    borderColor: '#4a9eff',
-                    backgroundColor: 'rgba(74, 158, 255, 0.06)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 0,
-                    pointHitRadius: 8,
-                    pointHoverRadius: 4,
-                    pointHoverBackgroundColor: '#4a9eff',
-                }],
+                labels: fullLabels,
+                datasets: [
+                    {
+                        label: 'Vayu (Historical)',
+                        data: historicalValues,
+                        borderColor: '#4a9eff',
+                        backgroundColor: 'rgba(74, 158, 255, 0.06)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                    },
+                    {
+                        label: '3-Day ML Projection',
+                        data: projectedValues,
+                        borderColor: '#ffab40',
+                        borderWidth: 2,
+                        borderDash: [5, 4],
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#ffab40',
+                    }
+                ],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: true, position: 'top', align: 'end' },
                     tooltip: {
                         backgroundColor: '#1a1f2e',
                         borderColor: '#2a3142',
@@ -75,15 +107,12 @@ async function loadTrendChart() {
                         titleFont: { weight: '600', size: 12 },
                         bodyFont: { family: "'IBM Plex Mono'", size: 13 },
                         displayColors: false,
-                        callbacks: {
-                            label: (item) => `Vayu: ${item.raw.toFixed(2)}`,
-                        },
                     },
                 },
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: { maxTicksLimit: 8, font: { size: 10 } },
+                        ticks: { maxTicksLimit: 10, font: { size: 10 } },
                     },
                     y: {
                         grid: { color: '#1e2433' },
@@ -199,47 +228,86 @@ async function loadValidationChart() {
     }
 }
 
-// ─── Route Breakdown ───────────────────────────────────────────────────
+// ─── Route Breakdown, Rule 135 & HHI ───────────────────────────────────
 async function loadRouteBreakdown() {
     try {
         const res = await fetch('/api/routes/breakdown');
         const json = await res.json();
         if (json.status !== 'ok') return;
-
-        const routes = json.data;
-        Object.entries(routes).forEach(([route, info]) => {
-            const fareEl = document.getElementById(`fare-${route}`);
-            if (fareEl) fareEl.textContent = `₹${Math.round(info.current_fare).toLocaleString('en-IN')}`;
-
-            const sparkEl = document.getElementById(`spark-${route}`);
-            if (sparkEl && info.sparkline.length > 1) {
-                const isUp = info.sparkline[info.sparkline.length - 1] >= info.sparkline[0];
-                new Chart(sparkEl, {
-                    type: 'line',
-                    data: {
-                        labels: info.sparkline.map((_, i) => i),
-                        datasets: [{
-                            data: info.sparkline,
-                            borderColor: isUp ? '#00c853' : '#ff5252',
-                            borderWidth: 1.5,
-                            fill: false,
-                            tension: 0.4,
-                            pointRadius: 0,
-                        }],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        scales: { x: { display: false }, y: { display: false } },
-                        animation: false,
-                    },
-                });
-            }
-        });
+        renderRouteBreakdownDOM(json.data);
     } catch (err) {
         console.error('Route breakdown error:', err);
     }
+}
+
+function renderRouteBreakdownDOM(routes) {
+    if (!routes) return;
+    Object.entries(routes).forEach(([route, info]) => {
+        // Fare display
+        const fareEl = document.getElementById(`fare-${route}`);
+        if (fareEl) fareEl.textContent = `INR ${Math.round(info.current_fare).toLocaleString('en-IN')}`;
+
+        // Rule 135 compliance badge & heatmap styling
+        const badgeEl = document.getElementById(`badge-${route}`);
+        if (badgeEl) {
+            if (info.rule_135_compliant) {
+                badgeEl.className = 'badge-status compliant bg-green-900';
+                badgeEl.textContent = 'COMPLIANT';
+            } else {
+                badgeEl.className = 'badge-status breach bg-red-900';
+                badgeEl.textContent = `RULE 135 BREACH (${info.rule_135_breaches} flights)`;
+            }
+        }
+
+        // HHI score and status meter & heatmap styling
+        const hhiScoreEl = document.getElementById(`hhi-score-${route}`);
+        if (hhiScoreEl) hhiScoreEl.textContent = info.hhi_score;
+
+        const hhiStatusEl = document.getElementById(`hhi-status-${route}`);
+        if (hhiStatusEl) {
+            let heatClass = 'bg-green-900';
+            if (info.hhi_score > 2500 || !info.rule_135_compliant) heatClass = 'bg-red-900';
+            else if (info.hhi_score >= 1500) heatClass = 'bg-yellow-900';
+
+            hhiStatusEl.className = `hhi-meter ${info.hhi_level} ${heatClass}`;
+            hhiStatusEl.textContent = `HHI: ${info.hhi_score} (${info.hhi_status})`;
+        }
+
+        const hhiSharesEl = document.getElementById(`hhi-shares-${route}`);
+        if (hhiSharesEl && info.hhi_shares) {
+            const sharesStr = Object.entries(info.hhi_shares)
+                .map(([k, v]) => `${k} ${v}%`)
+                .join(', ');
+            if (sharesStr) hhiSharesEl.textContent = sharesStr;
+        }
+
+        // Sparkline chart
+        const sparkEl = document.getElementById(`spark-${route}`);
+        if (sparkEl && info.sparkline && info.sparkline.length > 1) {
+            const isUp = info.sparkline[info.sparkline.length - 1] >= info.sparkline[0];
+            new Chart(sparkEl, {
+                type: 'line',
+                data: {
+                    labels: info.sparkline.map((_, i) => i),
+                    datasets: [{
+                        data: info.sparkline,
+                        borderColor: isUp ? '#00c853' : '#ff5252',
+                        borderWidth: 1.5,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: { x: { display: false }, y: { display: false } },
+                    animation: false,
+                },
+            });
+        }
+    });
 }
 
 // ─── Pipeline Stats ────────────────────────────────────────────────────
@@ -326,12 +394,60 @@ function initWebSocket() {
         ws.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             if (msg.type === 'index_update') {
-                updateHero(msg.data.vayu_value, msg.data.daily_change_pct);
+                const d = msg.data;
+                if (d.index) {
+                    updateHero(d.index.vayu_value, d.index.daily_change_pct);
+                } else if (d.vayu_value !== undefined) {
+                    updateHero(d.vayu_value, d.daily_change_pct);
+                }
+
+                if (d.elasticity && d.elasticity.badge_text) {
+                    const elBadge = document.getElementById('elasticity-badge');
+                    if (elBadge) elBadge.textContent = d.elasticity.badge_text;
+                }
+
+                if (d.routes) {
+                    renderRouteBreakdownDOM(d.routes);
+                }
+
+                loadTrendChart();
+                loadValidationChart();
+                loadPipelineStats();
+                loadScrapeLog();
+            } else if (msg.type === 'surge_alert') {
+                handleSurgeAlert(msg.data);
             }
         };
         ws.onclose = () => setTimeout(initWebSocket, 5000);
         setInterval(() => { if (ws?.readyState === 1) ws.send('ping'); }, 30000);
     } catch (err) {}
+}
+
+function handleSurgeAlert(data) {
+    const feed = document.getElementById('surge-alert-feed');
+    const msg = `SURGE DETECTED: ${data.route} fares exceed 7-day moving average by +${data.variance_pct}%. Flagged for DGCA review.`;
+    showToast(msg, 'warning');
+
+    if (feed) {
+        const empty = feed.querySelector('.surge-alert-empty');
+        if (empty) empty.remove();
+
+        const item = document.createElement('div');
+        item.className = 'surge-alert-item';
+        item.innerHTML = `
+            <div>
+                <strong>SURGE DETECTED (${data.route}):</strong> Average fare INR ${data.current_avg.toLocaleString('en-IN')} exceeds 7-day SMA (INR ${data.sma.toLocaleString('en-IN')}) by <strong>+${data.variance_pct}%</strong>. Flagged for DGCA TMU review.
+            </div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);">${data.timestamp}</span>
+        `;
+        feed.prepend(item);
+
+        const countEl = document.getElementById('stat-surge-count');
+        if (countEl) {
+            const currentCount = parseInt(countEl.textContent) || 0;
+            countEl.textContent = `${currentCount + 1} ALERTS`;
+        }
+    }
 }
 
 // ─── Update Hero ───────────────────────────────────────────────────────
@@ -342,10 +458,9 @@ function updateHero(value, changePct) {
     const changeEl = document.getElementById('index-change');
     if (changeEl && changePct !== undefined) {
         const sign = changePct >= 0 ? '+' : '';
-        const arrow = changePct > 0 ? '▲' : changePct < 0 ? '▼' : '—';
         const cls = changePct > 0 ? 'up' : changePct < 0 ? 'down' : 'flat';
         changeEl.className = `index-change ${cls}`;
-        changeEl.textContent = `${arrow} ${sign}${changePct.toFixed(3)}%`;
+        changeEl.textContent = `${sign}${changePct.toFixed(3)}%`;
     }
 }
 

@@ -60,11 +60,320 @@ body {
     margin-bottom: 20px;
 }
 
-.topbar-left {
+a, a:link, a:visited {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ─── Institutional Main Navbar ───────────────────────────────────────── */
+.main-navbar {
     display: flex;
     align-items: center;
     gap: 12px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 24px;
 }
+
+.main-navbar .nav-tab,
+.main-navbar .nav-tab:link,
+.main-navbar .nav-tab:visited {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font);
+    color: var(--text-2);
+    text-decoration: none !important;
+    padding: 8px 16px;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 120ms ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.main-navbar .nav-tab:hover {
+    color: var(--text-0);
+    background: var(--bg-2);
+    border-color: var(--border-light);
+}
+
+.main-navbar .nav-tab.active,
+.main-navbar .nav-tab.active:link,
+.main-navbar .nav-tab.active:visited {
+    color: var(--blue) !important;
+    background: var(--blue-dim) !important;
+    border: 1px solid var(--blue) !important;
+    font-weight: 700;
+}
+
+/* ─── Page Headers & Citations ────────────────────────────────────── */
+.page-header {
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+.page-title { font-size: 18px; font-weight: 700; color: var(--text-0); }
+.page-subtitle { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+.citation-note {
+    font-size: 11px;
+    color: var(--text-2);
+    background: var(--bg-2);
+    border: 1px dashed var(--border-light);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-top: 12px;
+}
+
+/* ─── Rule 135 & HHI Badges ────────────────────────────────────────── */
+.badge-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.badge-status.compliant {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid rgba(0, 200, 83, 0.3);
+}
+.badge-status.breach {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1px solid rgba(255, 82, 82, 0.4);
+    animation: flashPulse 1.2s infinite alternate;
+}
+@keyframes flashPulse {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0.7; transform: scale(1.02); }
+}
+
+.hhi-meter {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
+/* ─── Heatmap CSS Background Classes ────────────────────────────────── */
+.bg-red-900 {
+    background: rgba(255, 82, 82, 0.18) !important;
+    border: 1px solid rgba(255, 82, 82, 0.4) !important;
+    color: #ff5252 !important;
+}
+
+.bg-yellow-900 {
+    background: rgba(255, 171, 64, 0.18) !important;
+    border: 1px solid rgba(255, 171, 64, 0.4) !important;
+    color: #ffab40 !important;
+}
+
+.bg-green-900 {
+    background: rgba(0, 200, 83, 0.18) !important;
+    border: 1px solid rgba(0, 200, 83, 0.4) !important;
+    color: #00c853 !important;
+}
+
+/* ─── Export CSV Button & Elasticity Badge ──────────────────────────── */
+.btn-export {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    color: var(--blue);
+    background: var(--blue-dim);
+    border: 1px solid rgba(74, 158, 255, 0.4);
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none !important;
+    transition: all 120ms ease;
+    display: inline-flex;
+    align-items: center;
+    text-transform: uppercase;
+}
+.btn-export:hover {
+    background: var(--blue);
+    color: #0d1117;
+    border-color: var(--blue);
+}
+
+.badge-elasticity {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    background: var(--green-dim);
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    display: inline-block;
+}
+
+/* ─── Route-Based Tracker Grid ────────────────────────────────────────── */
+.route-tracker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.route-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 150ms ease;
+}
+.route-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-1px);
+}
+
+.route-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.route-card-code {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text-0);
+}
+.route-card-name {
+    font-size: 11px;
+    color: var(--text-2);
+}
+
+.route-card-fare {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.route-card-fare .fare-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.route-card-fare .fare-value {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--blue);
+}
+
+.route-card-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+}
+.metric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+}
+.metric-key {
+    color: var(--text-2);
+    font-weight: 500;
+}
+.metric-val {
+    font-family: var(--mono);
+    color: var(--text-1);
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.route-card-spark {
+    margin-top: 4px;
+}
+.spark-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-3);
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.hhi-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-2);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.color-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.color-dot.green { background: var(--green); }
+.color-dot.yellow { background: var(--amber); }
+.color-dot.red { background: var(--red); }
+
+/* ─── Surge Feed & Telemetry ────────────────────────────────────────── */
+.surge-alert-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.surge-alert-empty {
+    font-size: 12px;
+    color: var(--text-2);
+    padding: 16px;
+    background: var(--bg-2);
+    border-radius: 4px;
+    text-align: center;
+}
+.surge-alert-item {
+    background: rgba(255, 171, 64, 0.08);
+    border: 1px solid var(--amber);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text-0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideUp 0.3s ease-out;
+}
+.surge-alert-item .surge-icon { color: var(--amber); font-size: 16px; margin-right: 8px; }
+
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+.telemetry-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+}
+.telemetry-key { font-size: 11px; color: var(--text-2); text-transform: uppercase; }
+.telemetry-val { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text-0); margin-top: 4px; }
 
 .topbar-logo {
     font-family: var(--mono);

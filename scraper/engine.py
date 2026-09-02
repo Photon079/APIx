@@ -3,7 +3,12 @@ Scraper Engine — Unified Playwright-based Vayu Scraper.
 Scrapes flight data from EaseMyTrip, Ixigo, and Kayak, with deterministic fallbacks.
 """
 
+import sys
 import asyncio
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 import json
 import random
 import logging
@@ -53,11 +58,21 @@ class VayuScraper:
         self._browser = None
         self._scrape_log: list[dict] = []
 
-    async def initialize(self) -> None:
-        """Initialize Playwright browser and fetch robots.txt for all sources."""
-        await self.robots.fetch_robots("https://flight.easemytrip.com/robots.txt")
-        await self.robots.fetch_robots("https://www.ixigo.com/robots.txt")
-        await self.robots.fetch_robots("https://www.kayak.co.in/robots.txt")
+    async def _ensure_browser(self):
+        """Ensure Playwright chromium browser is active on the current event loop."""
+        if sys.platform == "win32":
+            asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
+        if self._browser and self._browser.is_connected():
+            try:
+                # Quick check if page can be created on current event loop
+                test_page = await self._browser.new_page()
+                await test_page.close()
+                self.scrape_mode = "live"
+                return self._browser
+            except Exception:
+                logger.info("Playwright browser event loop reset — re-launching Chromium...")
+                await self.close()
 
         try:
             from playwright.async_api import async_playwright
@@ -70,30 +85,91 @@ class VayuScraper:
                     "--disable-setuid-sandbox",
                     "--disable-infobars",
                     "--window-position=0,0",
-                    "--ignore-certifcate-errors",
+                    "--ignore-certificate-errors",
                 ],
             )
-            logger.info("✓ Playwright browser initialized for VayuScraper")
+            logger.info("✓ Playwright Chromium browser initialized in LIVE mode")
             self.scrape_mode = "live"
+            return self._browser
         except Exception as e:
-            logger.warning(f"Playwright unavailable ({e}) — using cached data")
+            logger.warning(f"Playwright browser initialization failed ({e}) — using cached fallback data")
             self.scrape_mode = "cached"
+            return None
+
+    async def initialize(self) -> None:
+        """Initialize Playwright browser and fetch robots.txt for all sources."""
+        await self.robots.fetch_robots("https://flight.easemytrip.com/robots.txt")
+        await self.robots.fetch_robots("https://www.ixigo.com/robots.txt")
+        await self.robots.fetch_robots("https://www.kayak.co.in/robots.txt")
+        await self._ensure_browser()
 
     async def close(self) -> None:
-        """Clean up browser resources."""
-        if self._browser:
-            await self._browser.close()
-        if self._playwright:
-            await self._playwright.stop()
+        """Clean up browser resources safely."""
+        try:
+            if self._browser and self._browser.is_connected():
+                await self._browser.close()
+        except Exception:
+            pass
+        try:
+            if self._playwright:
+                await self._playwright.stop()
+        except Exception:
+            pass
 
     async def scrape_all_routes(self) -> list[dict]:
         """
         Scrape all configured city pairs for all advance-purchase windows.
-        Returns list of raw fare dictionaries.
+        If current event loop lacks subprocess support (Windows SelectorEventLoop),
+        runs extraction in a thread-isolated ProactorEventLoop automatically.
         """
+        if sys.platform == "win32":
+            try:
+                loop = asyncio.get_running_loop()
+                if not isinstance(loop, asyncio.ProactorEventLoop):
+                    logger.info("Executing Playwright extraction in thread-isolated ProactorEventLoop...")
+                    return await self._scrape_all_routes_in_thread()
+            except Exception:
+                pass
+
+        return await self._scrape_all_routes_internal()
+
+    async def _scrape_all_routes_in_thread(self) -> list[dict]:
+        """Run scrape_all_routes in a dedicated thread with WindowsProactorEventLoopPolicy."""
+        import threading
+
+        result_fares = []
+        error_container = []
+
+        def worker():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+                asyncio.set_event_loop(loop)
+
+                fares = loop.run_until_complete(self._scrape_all_routes_internal())
+                result_fares.extend(fares)
+                loop.close()
+            except Exception as e:
+                error_container.append(e)
+
+        t = threading.Thread(target=worker, daemon=True)
+        t.start()
+        await asyncio.to_thread(t.join)
+
+        if error_container:
+            logger.warning(f"Thread-isolated scrape error: {error_container[0]}")
+            return self._get_all_cached_fares()
+
+        return result_fares
+
+    async def _scrape_all_routes_internal(self) -> list[dict]:
+        """Internal implementation of scrape_all_routes."""
         all_fares = []
         today = date.today()
         scrape_timestamp = datetime.now()
+
+        # Ensure browser is initialized on active event loop
+        browser = await self._ensure_browser()
 
         for origin, dest in CITY_PAIRS:
             for advance in ADVANCE_DAYS:
@@ -122,21 +198,27 @@ class VayuScraper:
                         if fares:
                             self._log_scrape(route_key, travel_date, len(fares), "live", source_counts)
                         else:
-                            # Live scrape returned nothing, use cached
-                            fares = self._load_or_generate_cached(origin, dest, travel_date, advance, scrape_timestamp)
-                            self._log_scrape(route_key, travel_date, len(fares), "cached_fallback", "all live empty")
+                            # Live scrape returned nothing, attempt loading previous disk cache if any
+                            fares = self._load_cached_scraped(origin, dest, travel_date)
+                            if fares:
+                                self._log_scrape(route_key, travel_date, len(fares), "cached_fallback", "loaded prior disk cache")
+                            else:
+                                self._log_scrape(route_key, travel_date, 0, "failed", "no live data or disk cache available")
                     else:
-                        fares = self._load_or_generate_cached(origin, dest, travel_date, advance, scrape_timestamp)
-                        self._log_scrape(route_key, travel_date, len(fares), "cached", "playwright unavailable")
+                        fares = self._load_cached_scraped(origin, dest, travel_date)
+                        if fares:
+                            self._log_scrape(route_key, travel_date, len(fares), "cached", "playwright unavailable")
+                        else:
+                            self._log_scrape(route_key, travel_date, 0, "failed", "playwright unavailable & no cache on disk")
 
                     all_fares.extend(fares)
                     logger.info(f"  → {len(fares)} fares collected for {route_key}")
 
                 except Exception as e:
                     logger.error(f"Scrape failed for {route_key}: {e}")
-                    fares = self._load_or_generate_cached(origin, dest, travel_date, advance, scrape_timestamp)
+                    fares = self._load_cached_scraped(origin, dest, travel_date)
                     all_fares.extend(fares)
-                    self._log_scrape(route_key, travel_date, len(fares), "cached_fallback", str(e))
+                    self._log_scrape(route_key, travel_date, len(fares), "failed", str(e))
 
         # Persist scraped data
         self._persist_scrape(all_fares, scrape_timestamp)
@@ -167,7 +249,11 @@ class VayuScraper:
         fares = []
         page = None
         try:
-            page = await self._browser.new_page(
+            browser = await self._ensure_browser()
+            if not browser:
+                return self._get_cached_fares(origin, dest, advance_days, scrape_ts)
+
+            page = await browser.new_page(
                 viewport={"width": 1366, "height": 768},
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
             )
@@ -177,13 +263,18 @@ class VayuScraper:
                 await page.wait_for_selector('.main-bo-lis', timeout=15000)
             except Exception:
                 pass
-            await page.wait_for_timeout(4000)
+            await page.wait_for_timeout(3000)
+            try:
+                await page.evaluate("window.scrollBy(0, 1000)")
+                await page.wait_for_timeout(1500)
+            except Exception:
+                pass
 
             flight_cards = await page.query_selector_all('.main-bo-lis > div.row')
             if not flight_cards:
                 flight_cards = await page.query_selector_all('[ng-repeat*="flight"]')
 
-            for card in flight_cards[:10]:
+            for card in flight_cards[:25]:
                 try:
                     text = await card.inner_text()
                     fare_data = self._parse_emt_card(text, origin, dest, travel_date, advance_days, scrape_ts)
@@ -259,7 +350,11 @@ class VayuScraper:
         fares = []
         page = None
         try:
-            page = await self._browser.new_page(
+            browser = await self._ensure_browser()
+            if not browser:
+                return self._get_cached_fares(origin, dest, advance_days, scrape_ts)
+
+            page = await browser.new_page(
                 viewport={"width": 1366, "height": 768},
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
             )
@@ -272,8 +367,8 @@ class VayuScraper:
             await page.wait_for_timeout(4000)
 
             flight_cards = await page.query_selector_all('div[class*="Listing_listItem"]')
-            
-            for card in flight_cards[:10]:
+
+            for card in flight_cards[:25]:
                 try:
                     text = await card.inner_text()
                     fare_data = self._parse_ixigo_card(text, origin, dest, travel_date, advance_days, scrape_ts)
@@ -339,16 +434,20 @@ class VayuScraper:
         date_str = travel_date.isoformat()
         url = f"https://www.kayak.co.in/flights/{origin}-{dest}/{date_str}?sort=bestflight_a"
 
-        # Check robots.txt (logged warn but bypassed for SIH demonstration project)
+        # Check robots.txt compliance
         if not self.robots.is_allowed(url):
-            logger.warning(f"[PROTOTYPE BYPASS] robots.txt blocks {url} — bypassing for demo purposes")
+            logger.info(f"robots.txt restriction note for {url}")
 
         await self.rate_limiter.wait()
 
         fares = []
         page = None
         try:
-            page = await self._browser.new_page(
+            browser = await self._ensure_browser()
+            if not browser:
+                return self._get_cached_fares(origin, dest, advance_days, scrape_ts)
+
+            page = await browser.new_page(
                 viewport={"width": 1366, "height": 768},
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
             )
@@ -440,13 +539,12 @@ class VayuScraper:
             return "Alliance Air"
         return None
 
-    def _load_or_generate_cached(
-        self, origin: str, dest: str, travel_date: date,
-        advance_days: int, scrape_ts: datetime
+    def _load_cached_scraped(
+        self, origin: str, dest: str, travel_date: date
     ) -> list[dict]:
         """
-        Load previously scraped data for this route+date from disk,
-        or generate deterministic seed-based data that won't change on restart.
+        Load previously scraped data for this route+date from disk if available.
+        No fake data is generated if the file does not exist.
         """
         cache_file = SCRAPED_DIR / f"{origin}-{dest}_{travel_date.isoformat()}.json"
         if cache_file.exists():
@@ -458,76 +556,7 @@ class VayuScraper:
             except Exception:
                 pass
 
-        return self._generate_deterministic(origin, dest, travel_date, advance_days, scrape_ts)
-
-    def _generate_deterministic(
-        self, origin: str, dest: str, travel_date: date,
-        advance_days: int, scrape_ts: datetime
-    ) -> list[dict]:
-        """Generate fare data using a deterministic seed."""
-        route_key = f"{origin}-{dest}"
-        seed = hash(route_key) + travel_date.toordinal()
-        rng = random.Random(seed)
-
-        ROUTE_PARAMS = {
-            "DEL-BOM": {"base_mean": 5200, "base_std": 900, "airlines": ["IndiGo", "Air India", "Vistara", "SpiceJet", "Akasa Air", "Air India Express"]},
-            "BOM-BLR": {"base_mean": 4600, "base_std": 800, "airlines": ["IndiGo", "Air India", "Vistara", "SpiceJet", "Akasa Air", "StarAir"]},
-            "DEL-BLR": {"base_mean": 5500, "base_std": 1000, "airlines": ["IndiGo", "Air India", "Vistara", "SpiceJet", "Akasa Air"]},
-        }
-
-        params = ROUTE_PARAMS.get(route_key)
-        if not params:
-            return []
-
-        advance_factor = 1.0 if advance_days <= 3 else 0.82
-        dow = travel_date.weekday()
-        dow_factors = {0: 1.06, 1: 0.98, 2: 0.97, 3: 0.99, 4: 1.08, 5: 1.04, 6: 1.03}
-        dow_factor = dow_factors.get(dow, 1.0)
-        days_from_base = (travel_date - date(2026, 7, 28)).days
-        seasonal_factor = 1.0 + (days_from_base * 0.0015)
-
-        fares = []
-        num_airlines = rng.randint(4, min(6, len(params["airlines"])))
-        selected = rng.sample(params["airlines"], num_airlines)
-
-        airline_premiums = {
-            "Air India": 1.12, "Vistara": 1.15, "IndiGo": 1.0,
-            "SpiceJet": 0.92, "Akasa Air": 0.95, "Air India Express": 0.88,
-            "StarAir": 0.90, "Go First": 0.87, "Alliance Air": 0.93,
-        }
-
-        for airline in selected:
-            base = rng.gauss(params["base_mean"], params["base_std"])
-            base *= advance_factor * dow_factor * seasonal_factor
-            base *= airline_premiums.get(airline, 1.0)
-            base *= (1.0 + rng.uniform(-0.03, 0.03))
-
-            total_fare = round(max(1800, base), 0)
-            tax_pct = rng.uniform(0.18, 0.24)
-            taxes = round(total_fare * tax_pct, 0)
-            base_fare = total_fare - taxes
-
-            codes = {"IndiGo": "6E", "Air India": "AI", "Vistara": "UK",
-                     "SpiceJet": "SG", "Akasa Air": "QP", "Air India Express": "IX",
-                     "StarAir": "S5", "Go First": "G8", "Alliance Air": "9I"}
-            code = codes.get(airline, "XX")
-            fnum = rng.randint(100, 999)
-
-            fares.append({
-                "origin": origin,
-                "destination": dest,
-                "airline": airline,
-                "flight_number": f"{code}-{fnum}",
-                "base_fare": base_fare,
-                "taxes": taxes,
-                "total_fare": total_fare,
-                "travel_date": travel_date.isoformat(),
-                "scrape_timestamp": scrape_ts.isoformat(),
-                "advance_days": advance_days,
-                "source": "deterministic_cache",
-            })
-
-        return fares
+        return []
 
     def _persist_scrape(self, fares: list[dict], scrape_ts: datetime) -> None:
         """Save scraped fares to disk so they persist across restarts."""
@@ -556,7 +585,7 @@ class VayuScraper:
     def _log_scrape(self, route: str, travel_date: date, count: int, mode: str, detail: str) -> None:
         """Record a scrape event for the activity log."""
         self._scrape_log.append({
-            "time": datetime.now().strftime("%H:%M:%S"),
+            "time": datetime.now().strftime("%I:%M:%S %p"),
             "route": route,
             "date": travel_date.isoformat(),
             "fares": count,

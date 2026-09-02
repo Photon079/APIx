@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Regulatory Page Header -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h1 class="page-title">Compliance & Antitrust Regulatory Monitor</h1>
+        <p class="page-subtitle">Enforcement engine for Aircraft Rules 1937 (Rule 135) and Bharatiya Vayuyan Adhiniyam 2024 antitrust monitoring.</p>
+    </div>
+</div>
+
+<!-- Feature 1: Rule 135 Tariff Band Violation Tracker -->
+<div class="panel full-panel">
+    <div class="panel-header">
+        <span class="panel-title">Rule 135 Tariff Band Violation Tracker</span>
+        <span class="panel-badge warning">AIRCRAFT RULES 1937</span>
+    </div>
+    <div class="panel-body">
+        <p class="section-desc">
+            Monitors live airline base fares against statutory upper ceiling tariffs declared under Rule 135 and Bharatiya Vayuyan Adhiniyam 2024.
+        </p>
+        <table class="route-table">
+            <thead>
+                <tr>
+                    <th>Route</th>
+                    <th>Corridor</th>
+                    <th>Statutory Tariff Cap</th>
+                    <th>Live Base Fare Range</th>
+                    <th>Compliance Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="route-code">DEL → BOM</span></td>
+                    <td class="route-name">Delhi – Mumbai</td>
+                    <td class="route-weight">INR 12,000</td>
+                    <td class="route-fare" id="rule135-range-DEL-BOM">INR 4,899 – INR 7,200</td>
+                    <td>
+                        <span class="badge-status compliant" id="badge-DEL-BOM">COMPLIANT</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><span class="route-code">BOM → BLR</span></td>
+                    <td class="route-name">Mumbai – Bengaluru</td>
+                    <td class="route-weight">INR 10,000</td>
+                    <td class="route-fare" id="rule135-range-BOM-BLR">INR 4,200 – INR 6,100</td>
+                    <td>
+                        <span class="badge-status compliant" id="badge-BOM-BLR">COMPLIANT</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><span class="route-code">DEL → BLR</span></td>
+                    <td class="route-name">Delhi – Bengaluru</td>
+                    <td class="route-weight">INR 13,000</td>
+                    <td class="route-fare" id="rule135-range-DEL-BLR">INR 5,100 – INR 7,800</td>
+                    <td>
+                        <span class="badge-status compliant" id="badge-DEL-BLR">COMPLIANT</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Feature 2: Live HHI Market Concentration Meter -->
+<div class="panel full-panel">
+    <div class="panel-header">
+        <span class="panel-title">Live Herfindahl-Hirschman Index (HHI) Market Concentration Meter</span>
+        <span class="panel-badge info">ANTITRUST MONITOR</span>
+    </div>
+    <div class="panel-body">
+        <p class="section-desc">
+            Calculates real-time market concentration (HHI = Σ S_i^2) across scraped flight quotes to detect oligopoly and monopolistic pricing risks.
+        </p>
+        <table class="route-table">
+            <thead>
+                <tr>
+                    <th>Route Corridor</th>
+                    <th>Scraped Carrier Shares</th>
+                    <th>HHI Score</th>
+                    <th>Market Concentration Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="route-code">DEL → BOM</span> (Delhi – Mumbai)</td>
+                    <td id="hhi-shares-DEL-BOM" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-2);">IndiGo 58%, Air India 28%, SpiceJet 14%</td>
+                    <td class="route-fare" id="hhi-score-DEL-BOM">3450</td>
+                    <td>
+                        <span class="hhi-meter red" id="hhi-status-DEL-BOM">HHI: 3450 (Highly Monopolistic)</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><span class="route-code">BOM → BLR</span> (Mumbai – Bengaluru)</td>
+                    <td id="hhi-shares-BOM-BLR" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-2);">IndiGo 52%, Air India 30%, Akasa 18%</td>
+                    <td class="route-fare" id="hhi-score-BOM-BLR">2850</td>
+                    <td>
+                        <span class="hhi-meter red" id="hhi-status-BOM-BLR">HHI: 2850 (Highly Monopolistic)</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><span class="route-code">DEL → BLR</span> (Delhi – Bengaluru)</td>
+                    <td id="hhi-shares-DEL-BLR" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-2);">IndiGo 44%, Air India 32%, Vistara 24%</td>
+                    <td class="route-fare" id="hhi-score-DEL-BLR">2240</td>
+                    <td>
+                        <span class="hhi-meter yellow" id="hhi-status-DEL-BLR">HHI: 2240 (Concentrated)</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="hhi-legend">
+            <span class="legend-item"><span class="color-dot green"></span> HHI &lt; 1500: Competitive Market</span>
+            <span class="legend-item"><span class="color-dot yellow"></span> 1500 ≤ HHI ≤ 2500: Moderately Concentrated</span>
+            <span class="legend-item"><span class="color-dot red"></span> HHI &gt; 2500: Highly Monopolistic / Oligopoly Risk</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

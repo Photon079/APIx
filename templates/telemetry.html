@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Telemetry Page Header -->
+<div class="page-header">
+    <div class="page-title-group">
+        <h1 class="page-title">Telemetry & Automated Surge Alert Feed</h1>
+        <p class="page-subtitle">Real-time system telemetry, Playwright scraper stream, and Automated Surge Detection Engine.</p>
+    </div>
+</div>
+
+<!-- Automated Surge Alert Feed -->
+<div class="panel full-panel">
+    <div class="panel-header">
+        <span class="panel-title">Automated Surge Detection Alert Feed</span>
+        <span class="panel-badge warning" id="stat-surge-count">0 ALERTS</span>
+    </div>
+    <div class="panel-body">
+        <p class="section-desc">
+            Triggers automatic alerts whenever live scraped route averages exceed 7-day Simple Moving Average + 1.5 standard deviations (SMA + 1.5 σ).
+        </p>
+        <div class="surge-alert-feed" id="surge-alert-feed">
+            <div class="surge-alert-empty">
+                Listening for live surge events via WebSockets. Run a live scrape for T+1 (Next Day) flight window to trigger natural surge alerts.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scrape Log & System Stats -->
+<div class="bottom-row">
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">Live Scrape Stream Log</span>
+            <span class="panel-badge info" id="stat-persisted">0 files</span>
+        </div>
+        <div class="panel-body">
+            <ul class="log-list" id="scrape-log">
+                <li style="color:var(--text-3);font-size:12px;padding:8px 0;">Loading activity log...</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">Pydantic Sanitization & Validation Pipeline</span>
+            <span class="panel-badge good">STRICT TYPE CHECK</span>
+        </div>
+        <div class="panel-body">
+            <div class="telemetry-grid">
+                <div class="telemetry-card">
+                    <div class="telemetry-key">Cleaned Fares</div>
+                    <div class="telemetry-val" id="telemetry-cleaned">0</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-key">Deduplicated Quotes</div>
+                    <div class="telemetry-val" id="telemetry-dupes">0</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-key">Outliers Removed</div>
+                    <div class="telemetry-val" id="telemetry-outliers">0</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-key">Invalid Records Dropped</div>
+                    <div class="telemetry-val" id="telemetry-invalid">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

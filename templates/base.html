@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <meta name="description" content="Vayu — Airfare Price Index & Regulatory Compliance System for MoSPI/DGCA.">
+    <link rel="stylesheet" href="/static/css/style.css?v=1.1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="toast-container" id="toast-container"></div>
+
+<div class="dashboard">
+
+    <!-- Government Header -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-logo">VAYU</div>
+            <div>
+                <div class="topbar-title">AIRFARE PRICE INDEX & REGULATORY SUITE</div>
+                <div class="topbar-subtitle">Ministry of Statistics and Programme Implementation (MoSPI) / DGCA Tariff Monitoring Unit</div>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            <span class="mode-tag {% if scraper_mode == 'live' %}live{% else %}cached{% endif %}">
+                {% if scraper_mode == 'live' %}LIVE SCRAPE{% else %}CACHED BASELINE{% endif %}
+            </span>
+            <a href="/api/v1/export/fares" class="btn-export" title="Download SQLite Fares Dataset as CSV">
+                Export MoSPI CSV
+            </a>
+            <button class="btn-scrape" id="btn-scrape" onclick="triggerScrape()">
+                <div class="spinner"></div>
+                <span class="btn-text">Run Live Scrape</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="main-navbar">
+        <a href="/" class="nav-tab {% if page == 'dashboard' %}active{% endif %}">
+            Macro Economy Dashboard
+        </a>
+        <a href="/regulatory" class="nav-tab {% if page == 'regulatory' %}active{% endif %}">
+            Regulatory & Rule 135 Compliance
+        </a>
+        <a href="/telemetry" class="nav-tab {% if page == 'telemetry' %}active{% endif %}">
+            System Telemetry & Alerts
+        </a>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="/">Dashboard</a>
+            <a href="/regulatory">Regulatory Compliance</a>
+            <a href="/telemetry">Telemetry & Alerts</a>
+            <a href="/api/index/history">API Index Data</a>
+            <a href="/docs">Swagger Documentation</a>
+        </div>
+        <span>Vayu Index v1.0.0 | MoSPI / DGCA Official Analytics Platform</span>
+    </footer>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

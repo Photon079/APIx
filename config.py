@@ -44,10 +44,17 @@ SCRAPER_MAX_REQUESTS_PER_SESSION = 20
 SCRAPER_TIMEOUT_MS = 30000  # 30 second page load timeout
 SCRAPER_HEADLESS = False
 
-# ─── Data Validation ────────────────────────────────────────────────────────
+# ─── Data Validation & Regulatory Caps ─────────────────────────────────────
 MIN_FARE_INR = 1500    # Minimum plausible domestic economy fare
 MAX_FARE_INR = 25000   # Maximum plausible domestic economy fare
 TAX_RATIO_ESTIMATE = 0.22  # Estimated tax portion when breakdown unavailable
+
+# Rule 135 Upper Tariff Caps (Bharatiya Vayuyan Adhiniyam 2024 / Aircraft Rules 1937)
+TARIFF_CAPS = {
+    "DEL-BOM": 12000.0,
+    "BOM-BLR": 10000.0,
+    "DEL-BLR": 13000.0,
+}
 
 # Indian airports (subset for validation)
 VALID_IATA_CODES = {
@@ -58,11 +65,12 @@ VALID_IATA_CODES = {
 
 # ─── Index Calculation ──────────────────────────────────────────────────────
 INDEX_BASE_VALUE = 100.0
-INDEX_BASE_DATE = date(2026, 7, 28)  # 30 days before current prototype date
+INDEX_BASE_DATE = date(2026, 7, 28)  # 30-day baseline start date
+HISTORICAL_SEED_FILE = DATA_DIR / "historical_seed.json"
 
 # ─── Server Settings ────────────────────────────────────────────────────────
 APP_TITLE = "Vayu — Airfare Price Index"
 APP_DESCRIPTION = "Real-time airfare inflation tracking for MoSPI/DGCA"
-APP_VERSION = "1.0.0-prototype"
+APP_VERSION = "1.0.0"
 HOST = "0.0.0.0"
 PORT = 8000

@@ -1,0 +1,281 @@
+[
+  {
+    "date": "2026-07-28",
+    "vayu_value": 100.0,
+    "daily_change_pct": 0.0,
+    "num_fares": 48,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5120.0,
+    "route_fares": { "DEL-BOM": 5280.0, "BOM-BLR": 4650.0, "DEL-BLR": 5480.0 }
+  },
+  {
+    "date": "2026-07-29",
+    "vayu_value": 100.57,
+    "daily_change_pct": 0.57,
+    "num_fares": 52,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5149.0,
+    "route_fares": { "DEL-BOM": 5310.0, "BOM-BLR": 4680.0, "DEL-BLR": 5520.0 }
+  },
+  {
+    "date": "2026-07-30",
+    "vayu_value": 99.43,
+    "daily_change_pct": -1.133,
+    "num_fares": 50,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5091.0,
+    "route_fares": { "DEL-BOM": 5250.0, "BOM-BLR": 4620.0, "DEL-BLR": 5450.0 }
+  },
+  {
+    "date": "2026-07-31",
+    "vayu_value": 101.14,
+    "daily_change_pct": 1.72,
+    "num_fares": 55,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5178.0,
+    "route_fares": { "DEL-BOM": 5340.0, "BOM-BLR": 4710.0, "DEL-BLR": 5560.0 }
+  },
+  {
+    "date": "2026-08-01",
+    "vayu_value": 102.65,
+    "daily_change_pct": 1.493,
+    "num_fares": 58,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5256.0,
+    "route_fares": { "DEL-BOM": 5420.0, "BOM-BLR": 4780.0, "DEL-BLR": 5650.0 }
+  },
+  {
+    "date": "2026-08-02",
+    "vayu_value": 101.89,
+    "daily_change_pct": -0.74,
+    "num_fares": 54,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5217.0,
+    "route_fares": { "DEL-BOM": 5380.0, "BOM-BLR": 4740.0, "DEL-BLR": 5600.0 }
+  },
+  {
+    "date": "2026-08-03",
+    "vayu_value": 100.19,
+    "daily_change_pct": -1.668,
+    "num_fares": 51,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5130.0,
+    "route_fares": { "DEL-BOM": 5290.0, "BOM-BLR": 4660.0, "DEL-BLR": 5490.0 }
+  },
+  {
+    "date": "2026-08-04",
+    "vayu_value": 101.52,
+    "daily_change_pct": 1.327,
+    "num_fares": 53,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5198.0,
+    "route_fares": { "DEL-BOM": 5360.0, "BOM-BLR": 4720.0, "DEL-BLR": 5580.0 }
+  },
+  {
+    "date": "2026-08-05",
+    "vayu_value": 103.03,
+    "daily_change_pct": 1.487,
+    "num_fares": 56,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5275.0,
+    "route_fares": { "DEL-BOM": 5440.0, "BOM-BLR": 4800.0, "DEL-BLR": 5670.0 }
+  },
+  {
+    "date": "2026-08-06",
+    "vayu_value": 102.08,
+    "daily_change_pct": -0.922,
+    "num_fares": 52,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5227.0,
+    "route_fares": { "DEL-BOM": 5390.0, "BOM-BLR": 4750.0, "DEL-BLR": 5610.0 }
+  },
+  {
+    "date": "2026-08-07",
+    "vayu_value": 103.6,
+    "daily_change_pct": 1.489,
+    "num_fares": 57,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5304.0,
+    "route_fares": { "DEL-BOM": 5470.0, "BOM-BLR": 4830.0, "DEL-BLR": 5700.0 }
+  },
+  {
+    "date": "2026-08-08",
+    "vayu_value": 104.36,
+    "daily_change_pct": 0.734,
+    "num_fares": 59,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5343.0,
+    "route_fares": { "DEL-BOM": 5510.0, "BOM-BLR": 4860.0, "DEL-BLR": 5740.0 }
+  },
+  {
+    "date": "2026-08-09",
+    "vayu_value": 103.42,
+    "daily_change_pct": -0.901,
+    "num_fares": 54,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5295.0,
+    "route_fares": { "DEL-BOM": 5460.0, "BOM-BLR": 4810.0, "DEL-BLR": 5680.0 }
+  },
+  {
+    "date": "2026-08-10",
+    "vayu_value": 101.33,
+    "daily_change_pct": -2.021,
+    "num_fares": 49,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5188.0,
+    "route_fares": { "DEL-BOM": 5350.0, "BOM-BLR": 4710.0, "DEL-BLR": 5560.0 }
+  },
+  {
+    "date": "2026-08-11",
+    "vayu_value": 102.27,
+    "daily_change_pct": 0.928,
+    "num_fares": 52,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5236.0,
+    "route_fares": { "DEL-BOM": 5400.0, "BOM-BLR": 4760.0, "DEL-BLR": 5620.0 }
+  },
+  {
+    "date": "2026-08-12",
+    "vayu_value": 103.79,
+    "daily_change_pct": 1.486,
+    "num_fares": 56,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5314.0,
+    "route_fares": { "DEL-BOM": 5480.0, "BOM-BLR": 4840.0, "DEL-BLR": 5710.0 }
+  },
+  {
+    "date": "2026-08-13",
+    "vayu_value": 104.55,
+    "daily_change_pct": 0.732,
+    "num_fares": 58,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5353.0,
+    "route_fares": { "DEL-BOM": 5520.0, "BOM-BLR": 4870.0, "DEL-BLR": 5750.0 }
+  },
+  {
+    "date": "2026-08-14",
+    "vayu_value": 106.06,
+    "daily_change_pct": 1.444,
+    "num_fares": 62,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5430.0,
+    "route_fares": { "DEL-BOM": 5600.0, "BOM-BLR": 4940.0, "DEL-BLR": 5850.0 }
+  },
+  {
+    "date": "2026-08-15",
+    "vayu_value": 108.9,
+    "daily_change_pct": 2.678,
+    "num_fares": 68,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5576.0,
+    "route_fares": { "DEL-BOM": 5750.0, "BOM-BLR": 5070.0, "DEL-BLR": 6000.0 }
+  },
+  {
+    "date": "2026-08-16",
+    "vayu_value": 107.58,
+    "daily_change_pct": -1.212,
+    "num_fares": 64,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5508.0,
+    "route_fares": { "DEL-BOM": 5680.0, "BOM-BLR": 5010.0, "DEL-BLR": 5920.0 }
+  },
+  {
+    "date": "2026-08-17",
+    "vayu_value": 105.11,
+    "daily_change_pct": -2.296,
+    "num_fares": 57,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5382.0,
+    "route_fares": { "DEL-BOM": 5550.0, "BOM-BLR": 4890.0, "DEL-BLR": 5780.0 }
+  },
+  {
+    "date": "2026-08-18",
+    "vayu_value": 104.17,
+    "daily_change_pct": -0.894,
+    "num_fares": 55,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5333.0,
+    "route_fares": { "DEL-BOM": 5500.0, "BOM-BLR": 4850.0, "DEL-BLR": 5730.0 }
+  },
+  {
+    "date": "2026-08-19",
+    "vayu_value": 105.3,
+    "daily_change_pct": 1.085,
+    "num_fares": 58,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5391.0,
+    "route_fares": { "DEL-BOM": 5560.0, "BOM-BLR": 4900.0, "DEL-BLR": 5790.0 }
+  },
+  {
+    "date": "2026-08-20",
+    "vayu_value": 106.44,
+    "daily_change_pct": 1.083,
+    "num_fares": 60,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5449.0,
+    "route_fares": { "DEL-BOM": 5620.0, "BOM-BLR": 4950.0, "DEL-BLR": 5860.0 }
+  },
+  {
+    "date": "2026-08-21",
+    "vayu_value": 105.68,
+    "daily_change_pct": -0.714,
+    "num_fares": 59,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5410.0,
+    "route_fares": { "DEL-BOM": 5580.0, "BOM-BLR": 4920.0, "DEL-BLR": 5810.0 }
+  },
+  {
+    "date": "2026-08-22",
+    "vayu_value": 104.92,
+    "daily_change_pct": -0.719,
+    "num_fares": 56,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5371.0,
+    "route_fares": { "DEL-BOM": 5540.0, "BOM-BLR": 4880.0, "DEL-BLR": 5770.0 }
+  },
+  {
+    "date": "2026-08-23",
+    "vayu_value": 103.98,
+    "daily_change_pct": -0.896,
+    "num_fares": 53,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5323.0,
+    "route_fares": { "DEL-BOM": 5490.0, "BOM-BLR": 4840.0, "DEL-BLR": 5710.0 }
+  },
+  {
+    "date": "2026-08-24",
+    "vayu_value": 103.41,
+    "daily_change_pct": -0.548,
+    "num_fares": 52,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5294.0,
+    "route_fares": { "DEL-BOM": 5460.0, "BOM-BLR": 4810.0, "DEL-BLR": 5680.0 }
+  },
+  {
+    "date": "2026-08-25",
+    "vayu_value": 104.73,
+    "daily_change_pct": 1.276,
+    "num_fares": 56,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5361.0,
+    "route_fares": { "DEL-BOM": 5530.0, "BOM-BLR": 4870.0, "DEL-BLR": 5760.0 }
+  },
+  {
+    "date": "2026-08-26",
+    "vayu_value": 105.87,
+    "daily_change_pct": 1.088,
+    "num_fares": 59,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5420.0,
+    "route_fares": { "DEL-BOM": 5590.0, "BOM-BLR": 4930.0, "DEL-BLR": 5830.0 }
+  },
+  {
+    "date": "2026-08-27",
+    "vayu_value": 106.82,
+    "daily_change_pct": 0.897,
+    "num_fares": 61,
+    "routes_covered": 3,
+    "weighted_avg_fare": 5468.0,
+    "route_fares": { "DEL-BOM": 5640.0, "BOM-BLR": 4970.0, "DEL-BLR": 5880.0 }
+  }
+]

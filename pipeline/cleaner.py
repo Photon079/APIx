@@ -72,6 +72,9 @@ class FareCleaner:
         # Step 5: Remove outliers
         cleaned = self._remove_outliers(cleaned)
 
+        # Step 6: Commit to SQLite Database (ScrapedFare table)
+        self._commit_to_db(cleaned)
+
         self.stats["cleaned"] = len(cleaned)
         logger.info(
             f"Cleaning complete: {len(cleaned)} valid fares "
@@ -81,6 +84,36 @@ class FareCleaner:
         )
 
         return cleaned
+
+    def _commit_to_db(self, cleaned_fares: list[CleanedFare]) -> None:
+        """Persist CleanedFare objects into the ScrapedFare SQLite table."""
+        if not cleaned_fares:
+            return
+
+        from database import SessionLocal
+        from pipeline.db_models import ScrapedFare
+
+        session = SessionLocal()
+        try:
+            for fare in cleaned_fares:
+                db_fare = ScrapedFare(
+                    timestamp=fare.scrape_timestamp,
+                    route=fare.route,
+                    airline=fare.airline,
+                    advance_window=fare.advance_days,
+                    base_fare=fare.base_fare,
+                    tax_amount=fare.taxes,
+                    total_price=fare.total_fare,
+                    rule_135_breach=fare.rule_135_breach,
+                )
+                session.add(db_fare)
+            session.commit()
+            logger.info(f"Committed {len(cleaned_fares)} CleanedFare records to SQLite database (vayu_production.db)")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"Failed to commit CleanedFare to SQLite database: {e}")
+        finally:
+            session.close()
 
     def _clean_single(self, raw: RawFareQuote) -> Optional[CleanedFare]:
         """Clean a single raw fare quote."""
@@ -126,12 +159,18 @@ class FareCleaner:
 
         # Airline name cleanup
         airline = (raw.airline or "Unknown").strip().title()
+        route = f"{origin}-{destination}"
+
+        # Rule 135 Tariff Cap Check (Bharatiya Vayuyan Adhiniyam 2024 / Aircraft Rules 1937)
+        from config import TARIFF_CAPS
+        cap = TARIFF_CAPS.get(route, 15000.0)
+        rule_135_breach = base_fare > cap
 
         try:
             return CleanedFare(
                 origin=origin,
                 destination=destination,
-                route=f"{origin}-{destination}",
+                route=route,
                 airline=airline,
                 flight_number=raw.flight_number,
                 base_fare=round(base_fare, 2),
@@ -140,6 +179,7 @@ class FareCleaner:
                 travel_date=travel_date,
                 scrape_timestamp=scrape_ts,
                 advance_days=advance_days,
+                rule_135_breach=rule_135_breach,
                 source=raw.source,
             )
         except Exception as e:

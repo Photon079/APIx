@@ -44,7 +44,8 @@ class CleanedFare(BaseModel):
     travel_date: date
     scrape_timestamp: datetime
     advance_days: int = Field(..., ge=0, description="Days between scrape and travel")
-    source: str = "google_flights"
+    rule_135_breach: bool = Field(False, description="Flag if fare exceeds Aircraft Rules Rule 135 upper cap")
+    source: str = "easemytrip_live"
 
     @field_validator("origin", "destination")
     @classmethod
