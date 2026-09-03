@@ -386,7 +386,7 @@ function renderRouteBreakdownDOM(routes) {
             const isUp = info.sparkline[info.sparkline.length - 1] >= info.sparkline[0];
             const sparkCtx = sparkEl.getContext('2d');
             const sparkGradient = sparkCtx.createLinearGradient(0, 0, 0, 50);
-            sparkGradient.addColorStop(0, isUp ? 'rgba(52, 199, 89, 0.25)' : 'rgba(255, 59, 48, 0.25)');
+            sparkGradient.addColorStop(0, 'rgba(82, 99, 130, 0.35)');
             sparkGradient.addColorStop(1, 'transparent');
 
             sparkCharts[route] = new Chart(sparkEl, {
@@ -395,7 +395,7 @@ function renderRouteBreakdownDOM(routes) {
                     labels: info.sparkline.map((_, i) => i),
                     datasets: [{
                         data: info.sparkline,
-                        borderColor: '#8c9aae',  // palette-dark for all sparklines
+                        borderColor: '#526382',  // palette-dark for all sparklines
                         backgroundColor: sparkGradient,
                         borderWidth: 2,
                         fill: true,
