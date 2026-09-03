@@ -152,7 +152,10 @@ async function loadTrendChart() {
                         pointHoverBackgroundColor: '#ffffff',
                         pointHoverBorderColor: '#526382',
                         pointHoverBorderWidth: 3,
+
+                        
                     },
+
                     {
                         label: '3-Day ML Projection',
                         data: projectedValues,
@@ -193,7 +196,7 @@ async function loadTrendChart() {
                         grid: { display: false },
                         ticks: {
                             maxTicksLimit: 8,
-                            color: '#8c9aae',
+                            color: 'rgb(7, 7, 7)',
                             font: { size: 10 }
                         },
                         border: { display: false }
@@ -201,7 +204,7 @@ async function loadTrendChart() {
                     y: {
                         grid: { color: 'rgba(197, 208, 217, 0.25)' },
                         ticks: {
-                            color: '#8c9aae',
+                            color: 'rgb(8, 8, 8)',
                             font: { family: "'JetBrains Mono', monospace", size: 10 },
                             callback: v => v.toFixed(1),
                         },
