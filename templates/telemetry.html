@@ -1,71 +1,171 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Telemetry Page Header -->
-<div class="page-header">
-    <div class="page-title-group">
-        <h1 class="page-title">Telemetry & Automated Surge Alert Feed</h1>
-        <p class="page-subtitle">Real-time system telemetry, Playwright scraper stream, and Automated Surge Detection Engine.</p>
+
+<!-- ─── Telemetry Page Header ─── -->
+<div class="glass-card animate-enter stagger-1" style="margin-bottom: 24px; padding: 22px 26px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span class="glass-pill blue">REAL-TIME MONITORING</span>
+                <h2 class="glass-card-title">System Telemetry & Automated Surge Alert Feed</h2>
+            </div>
+            <p style="font-size: 13px; color: var(--palette-dark); line-height: 1.6;">
+                Real-time system telemetry, Playwright scraper stream, and Automated Surge Detection Engine (SMA + 1.5σ threshold).
+            </p>
+        </div>
+        <span class="glass-pill green">LIVE ENGINE</span>
     </div>
 </div>
 
-<!-- Automated Surge Alert Feed -->
-<div class="panel full-panel">
-    <div class="panel-header">
-        <span class="panel-title">Automated Surge Detection Alert Feed</span>
-        <span class="panel-badge warning" id="stat-surge-count">0 ALERTS</span>
+<!-- ─── Automated Surge Detection Alert Feed ─── -->
+<div class="glass-card animate-enter stagger-2" style="margin-bottom: 24px;">
+    <div class="glass-card-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="glass-pill orange">SURGE DETECTION</span>
+            <h3 class="glass-card-title">Automated Surge Detection Alert Feed</h3>
+        </div>
+        <span class="glass-pill orange" id="stat-surge-count">0 ALERTS</span>
     </div>
-    <div class="panel-body">
-        <p class="section-desc">
-            Triggers automatic alerts whenever live scraped route averages exceed 7-day Simple Moving Average + 1.5 standard deviations (SMA + 1.5 σ).
-        </p>
-        <div class="surge-alert-feed" id="surge-alert-feed">
-            <div class="surge-alert-empty">
-                Listening for live surge events via WebSockets. Run a live scrape for T+1 (Next Day) flight window to trigger natural surge alerts.
+
+    <p style="font-size: 12px; color: var(--palette-dark); margin-bottom: 18px; line-height: 1.6;">
+        Triggers automatic alerts whenever live scraped route averages exceed 7-day Simple Moving Average + 1.5 standard deviations (SMA + 1.5σ).
+    </p>
+
+    <div class="surge-feed-container" id="surge-alert-feed">
+        <div style="
+            background: rgba(197, 208, 217, 0.15);
+            border: 1.5px dashed rgba(197, 208, 217, 0.5);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            text-align: center;
+            color: var(--palette-dark);
+            font-size: 13px;
+        ">
+            <svg style="width: 42px; height: 42px; margin-bottom: 14px; opacity: 0.5; color: var(--palette-dark);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <div style="color: var(--palette-darkest); font-weight: 600; margin-bottom: 4px;">Listening for live surge events via WebSockets</div>
+            <div>Run a live scrape for T+1 (Next Day) flight window to trigger natural surge alerts.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Bottom Grid: Scrape Log + Validation Stats ─── -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+    <!-- Live Scrape Stream Log -->
+    <div class="glass-card animate-enter stagger-3">
+        <div class="glass-card-header">
+            <h3 class="glass-card-title">Live Scrape Stream Log</h3>
+            <span class="glass-pill blue" id="stat-persisted">0 files</span>
+        </div>
+
+        <ul class="glass-log-stream" id="scrape-log">
+            <li style="color: var(--palette-dark); font-size: 12px; padding: 18px 0; text-align: center;">
+                Loading activity log...
+            </li>
+        </ul>
+    </div>
+
+    <!-- Pydantic Sanitization & Validation Pipeline -->
+    <div class="glass-card animate-enter stagger-4">
+        <div class="glass-card-header">
+            <h3 class="glass-card-title">Pydantic Sanitization & Validation Pipeline</h3>
+            <span class="glass-pill green">STRICT TYPE CHECK</span>
+        </div>
+
+        <div class="telemetry-stats-grid">
+            <div class="tele-stat-box">
+                <div class="tele-stat-key">Cleaned Fares</div>
+                <div class="tele-stat-val" id="telemetry-cleaned">0</div>
+            </div>
+            <div class="tele-stat-box">
+                <div class="tele-stat-key">Deduplicated</div>
+                <div class="tele-stat-val" id="telemetry-dupes">0</div>
+            </div>
+            <div class="tele-stat-box">
+                <div class="tele-stat-key">Outliers Removed</div>
+                <div class="tele-stat-val" id="telemetry-outliers">0</div>
+            </div>
+            <div class="tele-stat-box">
+                <div class="tele-stat-key">Invalid Dropped</div>
+                <div class="tele-stat-val" id="telemetry-invalid">0</div>
+            </div>
+        </div>
+
+        <div style="
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(197, 208, 217, 0.4);
+            font-size: 11px;
+            color: var(--palette-dark);
+            line-height: 1.6;
+        ">
+            <strong style="color: var(--palette-darkest);">Pipeline Validation Flow:</strong>
+            <div style="margin-top: 6px;">Raw Scrape → Pydantic Type Check → IQR Outlier Filter → Deduplication → SQLite Persistence</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ─── Additional System Metrics Card ─── -->
+<div class="glass-card animate-enter stagger-5" style="margin-top: 24px;">
+    <div class="glass-card-header">
+        <h3 class="glass-card-title">WebSocket Event Stream & System Health</h3>
+        <span class="glass-pill green">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            CONNECTED
+        </span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+        <div class="tele-stat-box">
+            <div class="tele-stat-key">WebSocket Status</div>
+            <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--palette-dark); margin-top: 6px;">
+                READY • ws://
+            </div>
+        </div>
+
+        <div class="tele-stat-box">
+            <div class="tele-stat-key">Live Broadcast Events</div>
+            <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--palette-darkest); margin-top: 6px;">
+                index_update, surge_alert
+            </div>
+        </div>
+
+        <div class="tele-stat-box">
+            <div class="tele-stat-key">Background Loop Interval</div>
+            <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--palette-darkest); margin-top: 6px;">
+                900s (15 min)
+            </div>
+        </div>
+
+        <div class="tele-stat-box">
+            <div class="tele-stat-key">Playwright Engine</div>
+            <div style="font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--palette-darkest); margin-top: 6px;">
+                CHROMIUM • HEADLESS
             </div>
         </div>
     </div>
-</div>
 
-<!-- Scrape Log & System Stats -->
-<div class="bottom-row">
-    <div class="panel">
-        <div class="panel-header">
-            <span class="panel-title">Live Scrape Stream Log</span>
-            <span class="panel-badge info" id="stat-persisted">0 files</span>
-        </div>
-        <div class="panel-body">
-            <ul class="log-list" id="scrape-log">
-                <li style="color:var(--text-3);font-size:12px;padding:8px 0;">Loading activity log...</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-header">
-            <span class="panel-title">Pydantic Sanitization & Validation Pipeline</span>
-            <span class="panel-badge good">STRICT TYPE CHECK</span>
-        </div>
-        <div class="panel-body">
-            <div class="telemetry-grid">
-                <div class="telemetry-card">
-                    <div class="telemetry-key">Cleaned Fares</div>
-                    <div class="telemetry-val" id="telemetry-cleaned">0</div>
-                </div>
-                <div class="telemetry-card">
-                    <div class="telemetry-key">Deduplicated Quotes</div>
-                    <div class="telemetry-val" id="telemetry-dupes">0</div>
-                </div>
-                <div class="telemetry-card">
-                    <div class="telemetry-key">Outliers Removed</div>
-                    <div class="telemetry-val" id="telemetry-outliers">0</div>
-                </div>
-                <div class="telemetry-card">
-                    <div class="telemetry-key">Invalid Records Dropped</div>
-                    <div class="telemetry-val" id="telemetry-invalid">0</div>
-                </div>
-            </div>
-        </div>
+    <div style="
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(197, 208, 217, 0.4);
+        font-size: 11px;
+        color: var(--palette-dark);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    ">
+        <span>System uptime monitored via FastAPI lifespan context manager</span>
+        <span style="font-family: var(--font-mono); color: var(--palette-darkest); font-weight: 600;">Vayu v1.0.0 Production</span>
     </div>
 </div>
+
 {% endblock %}

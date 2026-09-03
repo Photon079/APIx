@@ -5,67 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
     <meta name="description" content="Vayu — Airfare Price Index & Regulatory Compliance System for MoSPI/DGCA.">
-    <link rel="stylesheet" href="/static/css/style.css?v=1.1">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" href="/static/css/style.css?v=3.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
 <div class="toast-container" id="toast-container"></div>
 
-<div class="dashboard">
+<div class="app-shell">
 
-    <!-- Government Header -->
-    <header class="topbar">
-        <div class="topbar-left">
-            <div class="topbar-logo">VAYU</div>
-            <div>
-                <div class="topbar-title">AIRFARE PRICE INDEX & REGULATORY SUITE</div>
-                <div class="topbar-subtitle">Ministry of Statistics and Programme Implementation (MoSPI) / DGCA Tariff Monitoring Unit</div>
-            </div>
-        </div>
+    <!-- ─── Floating, Vertically-Centered Sidebar (Hugs Content Only) ─── -->
+    <aside class="sidebar-dock" aria-label="Main Navigation">
 
-        <div class="topbar-right">
-            <span class="mode-tag {% if scraper_mode == 'live' %}live{% else %}cached{% endif %}">
-                {% if scraper_mode == 'live' %}LIVE SCRAPE{% else %}CACHED BASELINE{% endif %}
-            </span>
-            <a href="/api/v1/export/fares" class="btn-export" title="Download SQLite Fares Dataset as CSV">
-                Export MoSPI CSV
+        <!-- Brand Icon -->
+        <a href="/" class="sidebar-brand" title="Vayu Airfare Index">
+            V
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Main Navigation Icons -->
+        <nav class="sidebar-nav">
+            <!-- Tab 1: Macro Economy Dashboard -->
+            <a href="/" class="nav-item {% if page == 'dashboard' %}active{% endif %}" aria-label="Macro Economy Dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <div class="nav-tooltip">Macro Economy Dashboard</div>
             </a>
-            <button class="btn-scrape" id="btn-scrape" onclick="triggerScrape()">
-                <div class="spinner"></div>
-                <span class="btn-text">Run Live Scrape</span>
-            </button>
+
+            <!-- Tab 2: Regulatory Rules & Compliance -->
+            <a href="/regulatory" class="nav-item {% if page == 'regulatory' %}active{% endif %}" aria-label="Regulatory & Rule 135 Compliance">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <path d="M9 12l2 2 4-4"></path>
+                </svg>
+                <div class="nav-tooltip">Regulatory & Rule 135 Compliance</div>
+            </a>
+
+            <!-- Tab 3: System Telemetry & Alerts -->
+            <a href="/telemetry" class="nav-item {% if page == 'telemetry' %}active{% endif %}" aria-label="System Telemetry and Alerts">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                </svg>
+                <div class="nav-tooltip">System Telemetry & Alerts</div>
+            </a>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Bottom Actions (Download CSV Button) -->
+        <div class="sidebar-bottom">
+            <a href="/api/v1/export/fares" class="nav-item" title="Download Fares Dataset (CSV)" aria-label="Export Fares CSV">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <div class="nav-tooltip">Export MoSPI CSV</div>
+            </a>
         </div>
-    </header>
 
-    <!-- Navigation Bar -->
-    <nav class="main-navbar">
-        <a href="/" class="nav-tab {% if page == 'dashboard' %}active{% endif %}">
-            Macro Economy Dashboard
-        </a>
-        <a href="/regulatory" class="nav-tab {% if page == 'regulatory' %}active{% endif %}">
-            Regulatory & Rule 135 Compliance
-        </a>
-        <a href="/telemetry" class="nav-tab {% if page == 'telemetry' %}active{% endif %}">
-            System Telemetry & Alerts
-        </a>
-    </nav>
+    </aside>
 
-    {% block content %}{% endblock %}
+    <!-- ─── Main Content Viewport (Full Width, No Top Header) ─── -->
+    <main class="main-canvas">
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-links">
-            <a href="/">Dashboard</a>
-            <a href="/regulatory">Regulatory Compliance</a>
-            <a href="/telemetry">Telemetry & Alerts</a>
-            <a href="/api/index/history">API Index Data</a>
-            <a href="/docs">Swagger Documentation</a>
-        </div>
-        <span>Vayu Index v1.0.0 | MoSPI / DGCA Official Analytics Platform</span>
-    </footer>
+        <!-- Page Specific Content Block -->
+        {% block content %}{% endblock %}
+
+        <!-- Glass Footer -->
+        <footer class="glass-footer animate-enter stagger-5">
+            <div class="footer-links">
+                <a href="/">Macro Dashboard</a>
+                <a href="/regulatory">Regulatory Monitor</a>
+                <a href="/telemetry">Telemetry Feed</a>
+                <a href="/api/index/history">API Data</a>
+                <a href="/docs">Swagger API</a>
+            </div>
+            <span>Vayu Index v1.0.0 • MoSPI / DGCA Official Analytics Platform</span>
+        </footer>
+    </main>
+
 </div>
 
-<script src="/static/js/dashboard.js"></script>
+<script src="/static/js/dashboard.js?v=3.0"></script>
 </body>
 </html>

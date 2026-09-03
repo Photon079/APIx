@@ -1,25 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Regulatory Page Header -->
-<div class="page-header">
-    <div class="page-title-group">
-        <h1 class="page-title">Compliance & Antitrust Regulatory Monitor</h1>
-        <p class="page-subtitle">Enforcement engine for Aircraft Rules 1937 (Rule 135) and Bharatiya Vayuyan Adhiniyam 2024 antitrust monitoring.</p>
+
+<!-- ─── Regulatory Header ─── -->
+<div class="glass-card animate-enter stagger-1" style="margin-bottom: 24px; padding: 22px 26px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span class="glass-pill blue">STATUTORY ENFORCEMENT</span>
+                <h2 class="glass-card-title">Compliance & Antitrust Regulatory Monitor</h2>
+            </div>
+            <p style="font-size: 13px; color: var(--palette-dark); line-height: 1.6;">
+                Enforcement engine for Aircraft Rules 1937 (Rule 135) and Bharatiya Vayuyan Adhiniyam 2024 antitrust monitoring.
+            </p>
+        </div>
+        <span class="glass-pill green">ACTIVE MONITORING</span>
     </div>
 </div>
 
-<!-- Feature 1: Rule 135 Tariff Band Violation Tracker -->
-<div class="panel full-panel">
-    <div class="panel-header">
-        <span class="panel-title">Rule 135 Tariff Band Violation Tracker</span>
-        <span class="panel-badge warning">AIRCRAFT RULES 1937</span>
+<!-- ─── Feature 1: Rule 135 Tariff Band Violation Tracker ─── -->
+<div class="glass-card animate-enter stagger-2" style="margin-bottom: 24px;">
+    <div class="glass-card-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="glass-pill orange">AIRCRAFT RULES 1937</span>
+            <h3 class="glass-card-title">Rule 135 Tariff Band Violation Tracker</h3>
+        </div>
+        <span style="font-size: 11px; color: var(--palette-dark); font-weight: 600;">Ceiling Limits Verified</span>
     </div>
-    <div class="panel-body">
-        <p class="section-desc">
-            Monitors live airline base fares against statutory upper ceiling tariffs declared under Rule 135 and Bharatiya Vayuyan Adhiniyam 2024.
-        </p>
-        <table class="route-table">
+
+    <p style="font-size: 12px; color: var(--palette-dark); margin-bottom: 18px; line-height: 1.6;">
+        Monitors live airline base fares against statutory upper ceiling tariffs declared under Rule 135 and Bharatiya Vayuyan Adhiniyam 2024.
+    </p>
+
+    <div class="glass-table-container">
+        <table class="glass-table">
             <thead>
                 <tr>
                     <th>Route</th>
@@ -31,30 +45,30 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><span class="route-code">DEL → BOM</span></td>
-                    <td class="route-name">Delhi – Mumbai</td>
-                    <td class="route-weight">INR 12,000</td>
-                    <td class="route-fare" id="rule135-range-DEL-BOM">INR 4,899 – INR 7,200</td>
+                    <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);">DEL → BOM</span></td>
+                    <td style="color: var(--palette-dark);">Delhi – Mumbai</td>
+                    <td style="font-family: var(--font-mono); color: var(--palette-dark);">INR 12,000</td>
+                    <td style="font-family: var(--font-mono); font-weight: 600; color: var(--palette-darkest);" id="rule135-range-DEL-BOM">INR 4,899 – INR 7,200</td>
                     <td>
-                        <span class="badge-status compliant" id="badge-DEL-BOM">COMPLIANT</span>
+                        <span class="glass-pill green" id="badge-DEL-BOM">✓ COMPLIANT</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="route-code">BOM → BLR</span></td>
-                    <td class="route-name">Mumbai – Bengaluru</td>
-                    <td class="route-weight">INR 10,000</td>
-                    <td class="route-fare" id="rule135-range-BOM-BLR">INR 4,200 – INR 6,100</td>
+                    <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);">BOM → BLR</span></td>
+                    <td style="color: var(--palette-dark);">Mumbai – Bengaluru</td>
+                    <td style="font-family: var(--font-mono); color: var(--palette-dark);">INR 10,000</td>
+                    <td style="font-family: var(--font-mono); font-weight: 600; color: var(--palette-darkest);" id="rule135-range-BOM-BLR">INR 4,200 – INR 6,100</td>
                     <td>
-                        <span class="badge-status compliant" id="badge-BOM-BLR">COMPLIANT</span>
+                        <span class="glass-pill green" id="badge-BOM-BLR">✓ COMPLIANT</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="route-code">DEL → BLR</span></td>
-                    <td class="route-name">Delhi – Bengaluru</td>
-                    <td class="route-weight">INR 13,000</td>
-                    <td class="route-fare" id="rule135-range-DEL-BLR">INR 5,100 – INR 7,800</td>
+                    <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);">DEL → BLR</span></td>
+                    <td style="color: var(--palette-dark);">Delhi – Bengaluru</td>
+                    <td style="font-family: var(--font-mono); color: var(--palette-dark);">INR 13,000</td>
+                    <td style="font-family: var(--font-mono); font-weight: 600; color: var(--palette-darkest);" id="rule135-range-DEL-BLR">INR 5,100 – INR 7,800</td>
                     <td>
-                        <span class="badge-status compliant" id="badge-DEL-BLR">COMPLIANT</span>
+                        <span class="glass-pill green" id="badge-DEL-BLR">✓ COMPLIANT</span>
                     </td>
                 </tr>
             </tbody>
@@ -62,17 +76,22 @@
     </div>
 </div>
 
-<!-- Feature 2: Live HHI Market Concentration Meter -->
-<div class="panel full-panel">
-    <div class="panel-header">
-        <span class="panel-title">Live Herfindahl-Hirschman Index (HHI) Market Concentration Meter</span>
-        <span class="panel-badge info">ANTITRUST MONITOR</span>
+<!-- ─── Feature 2: Live HHI Market Concentration Meter ─── -->
+<div class="glass-card animate-enter stagger-3">
+    <div class="glass-card-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="glass-pill blue">ANTITRUST MONITOR</span>
+            <h3 class="glass-card-title">Live Herfindahl-Hirschman Index (HHI) Concentration Meter</h3>
+        </div>
+        <span style="font-size: 11px; color: var(--palette-dark); font-weight: 600;">Competition Commission Model</span>
     </div>
-    <div class="panel-body">
-        <p class="section-desc">
-            Calculates real-time market concentration (HHI = Σ S_i^2) across scraped flight quotes to detect oligopoly and monopolistic pricing risks.
-        </p>
-        <table class="route-table">
+
+    <p style="font-size: 12px; color: var(--palette-dark); margin-bottom: 18px; line-height: 1.6;">
+        Calculates real-time market concentration (HHI = Σ S<sub>i</sub><sup>2</sup>) across scraped flight quotes to detect oligopoly and monopolistic pricing risks.
+    </p>
+
+    <div class="glass-table-container">
+        <table class="glass-table">
             <thead>
                 <tr>
                     <th>Route Corridor</th>
@@ -83,37 +102,57 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><span class="route-code">DEL → BOM</span> (Delhi – Mumbai)</td>
-                    <td id="hhi-shares-DEL-BOM" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-2);">IndiGo 58%, Air India 28%, SpiceJet 14%</td>
-                    <td class="route-fare" id="hhi-score-DEL-BOM">3450</td>
                     <td>
-                        <span class="hhi-meter red" id="hhi-status-DEL-BOM">HHI: 3450 (Highly Monopolistic)</span>
+                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);">DEL → BOM</span>
+                        <span style="color: var(--palette-dark); font-size: 11px; margin-left: 6px;">(Delhi – Mumbai)</span>
+                    </td>
+                    <td id="hhi-shares-DEL-BOM" style="font-family: var(--font-mono); font-size: 12px; color: var(--palette-dark);">IndiGo 58%, Air India 28%, SpiceJet 14%</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);" id="hhi-score-DEL-BOM">3450</td>
+                    <td>
+                        <span class="glass-pill red" id="hhi-status-DEL-BOM">HHI: 3450 (Highly Monopolistic)</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="route-code">BOM → BLR</span> (Mumbai – Bengaluru)</td>
-                    <td id="hhi-shares-BOM-BLR" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-2);">IndiGo 52%, Air India 30%, Akasa 18%</td>
-                    <td class="route-fare" id="hhi-score-BOM-BLR">2850</td>
                     <td>
-                        <span class="hhi-meter red" id="hhi-status-BOM-BLR">HHI: 2850 (Highly Monopolistic)</span>
+                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);">BOM → BLR</span>
+                        <span style="color: var(--palette-dark); font-size: 11px; margin-left: 6px;">(Mumbai – Bengaluru)</span>
+                    </td>
+                    <td id="hhi-shares-BOM-BLR" style="font-family: var(--font-mono); font-size: 12px; color: var(--palette-dark);">IndiGo 52%, Air India 30%, Akasa 18%</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);" id="hhi-score-BOM-BLR">2850</td>
+                    <td>
+                        <span class="glass-pill red" id="hhi-status-BOM-BLR">HHI: 2850 (Highly Monopolistic)</span>
                     </td>
                 </tr>
                 <tr>
-                    <td><span class="route-code">DEL → BLR</span> (Delhi – Bengaluru)</td>
-                    <td id="hhi-shares-DEL-BLR" style="font-family: var(--font-mono); font-size: 12px; color: var(--text-2);">IndiGo 44%, Air India 32%, Vistara 24%</td>
-                    <td class="route-fare" id="hhi-score-DEL-BLR">2240</td>
                     <td>
-                        <span class="hhi-meter yellow" id="hhi-status-DEL-BLR">HHI: 2240 (Concentrated)</span>
+                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-darkest);">DEL → BLR</span>
+                        <span style="color: var(--palette-dark); font-size: 11px; margin-left: 6px;">(Delhi – Bengaluru)</span>
+                    </td>
+                    <td id="hhi-shares-DEL-BLR" style="font-family: var(--font-mono); font-size: 12px; color: var(--palette-dark);">IndiGo 44%, Air India 32%, Vistara 24%</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--palette-dark);" id="hhi-score-DEL-BLR">2240</td>
+                    <td>
+                        <span class="glass-pill orange" id="hhi-status-DEL-BLR">HHI: 2240 (Concentrated)</span>
                     </td>
                 </tr>
             </tbody>
         </table>
-        
-        <div class="hhi-legend">
-            <span class="legend-item"><span class="color-dot green"></span> HHI &lt; 1500: Competitive Market</span>
-            <span class="legend-item"><span class="color-dot yellow"></span> 1500 ≤ HHI ≤ 2500: Moderately Concentrated</span>
-            <span class="legend-item"><span class="color-dot red"></span> HHI &gt; 2500: Highly Monopolistic / Oligopoly Risk</span>
+    </div>
+
+    <!-- HHI Legend -->
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(197, 208, 217, 0.4); font-size: 12px; color: var(--palette-dark);">
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--palette-dark);"></span>
+            <span>HHI &lt; 1500: Competitive Market</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--palette-mid);"></span>
+            <span>1500 ≤ HHI ≤ 2500: Moderately Concentrated</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--palette-darkest);"></span>
+            <span>HHI &gt; 2500: Highly Monopolistic / Oligopoly Risk</span>
         </div>
     </div>
 </div>
+
 {% endblock %}
